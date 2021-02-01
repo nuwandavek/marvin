@@ -13,7 +13,11 @@
 
 ## Papers
 #### **xSLUE: A Benchmark and Analysis Platform for Cross-Style Language Understanding and Evaluation**
-- [Paper](https://arxiv.org/pdf/1911.03663.pdf)
+- [Paper](https://arxiv.org/pdf/1911.03663.pdf), [Project Site](http://xslue.com/)
+- Style is both a function (respect, casual) and a preference (personal style) - and is extraneous to the literal meaning of the text.
+- Various styles co-vary and interact in complex ways
+- GLUE benchmark
+- 
 
 #### **Text Style Transfer: A Review and Experiment Evaluation**
 - [Paper](https://arxiv.org/pdf/2010.12742.pdf)
