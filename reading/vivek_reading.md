@@ -29,4 +29,4 @@
 - [Paper](https://www.aclweb.org/anthology/2020.acl-main.294.pdf)
 
 #### **Automatically Neutralizing Subjective Bias in Text**
-- [Paper](https://ojs.aaai.org//index.php/AAAI/article/view/5385), [Code] (https://github.com/rpryzant/neutralizing-bias)
+- [Paper](https://ojs.aaai.org//index.php/AAAI/article/view/5385), [Code](https://github.com/rpryzant/neutralizing-bias)
