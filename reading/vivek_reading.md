@@ -23,7 +23,7 @@
 - [Paper](https://arxiv.org/pdf/2010.12742.pdf)
 
 #### **Reformulating Unsupervised Style Transfer as Paraphrase Generation**
-- [Paper](https://arxiv.org/pdf/2010.05700.pdf), [Project Site](http://style.cs.umass.edu/), [Demo](http://arkham.cs.umass.edu:8553/)
+- [Paper](https://arxiv.org/pdf/2010.05700.pdf), [Project Site](http://style.cs.umass.edu/), [Demo](http://arkham.cs.umass.edu:8553/), [Code](https://github.com/martiansideofthemoon/style-transfer-paraphrase)
 
 #### **Parallel Data Augmentation for Formality Style Transfer**
 - [Paper](https://www.aclweb.org/anthology/2020.acl-main.294.pdf)
