@@ -23,11 +23,12 @@
 - [Paper](https://arxiv.org/pdf/2010.12742.pdf)
 
 #### **Reformulating Unsupervised Style Transfer as Paraphrase Generation**
-- [Paper](https://arxiv.org/pdf/2010.05700.pdf), [Project Site](http://style.cs.umass.edu/), [Demo](http://arkham.cs.umass.edu:8553/)
+- [Paper](https://arxiv.org/pdf/2010.05700.pdf), [Project Site](http://style.cs.umass.edu/), [Demo](http://arkham.cs.umass.edu:8553/), [Code](https://github.com/martiansideofthemoon/style-transfer-paraphrase)
 
 #### **Parallel Data Augmentation for Formality Style Transfer**
 - [Paper](https://www.aclweb.org/anthology/2020.acl-main.294.pdf)
 
+<<<<<<< HEAD
 #### **Plug and Play language models**
 - [Paper](https://arxiv.org/pdf/1912.02164.pdf), [Blog Post](https://eng.uber.com/pplm/), [Code](https://github.com/uber-research/PPLM), [Demo](https://transformer.huggingface.co/model/pplm)
 - LMs are very good at coherent text, over a variety of contexts (basically learns P(x)) - but they are notoriously difficult to control
@@ -39,3 +40,10 @@
 
 #### **Tag and Generate**
 -[Paper](https://arxiv.org/pdf/2004.14257.pdf), [Code](https://github.com/tag-and-generate/Politeness-Transfer-A-Tag-and-Generate-Approach)
+=======
+#### **Automatically Neutralizing Subjective Bias in Text**
+- [Paper](https://ojs.aaai.org//index.php/AAAI/article/view/5385), [Code](https://github.com/rpryzant/neutralizing-bias)
+
+#### **A Structured Self-Attentive Sentence Embedding**
+- [Paper](https://arxiv.org/abs/1703.03130), [Related Implementation](https://github.com/prakashpandey9/Text-Classification-Pytorch)
+>>>>>>> 5d49d26ffdabcbc2d683862b132172ab1d91abbf
