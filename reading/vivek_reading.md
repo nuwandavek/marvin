@@ -42,5 +42,10 @@
 #### **Automatically Neutralizing Subjective Bias in Text**
 - [Paper](https://ojs.aaai.org//index.php/AAAI/article/view/5385), [Code](https://github.com/rpryzant/neutralizing-bias)
 
+
+#### **Text Setter**
+- [Paper](https://openreview.net/pdf?id=T6RYeudzf1) : used for merging different styles
+
+
 #### **A Structured Self-Attentive Sentence Embedding**
 - [Paper](https://arxiv.org/abs/1703.03130), [Related Implementation](https://github.com/prakashpandey9/Text-Classification-Pytorch)
