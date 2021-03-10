@@ -7,3 +7,38 @@
 .preview-head{
     height: 42px;
 }
+
+.button-actions{
+    display:inline-block;
+    border: none;
+    padding:0.7em 1.4em;
+    margin:1em 0.3em 0.3em 0;
+    border-radius:0.15em;
+    box-sizing: border-box;
+    text-decoration:none;
+    font-family:'Roboto',sans-serif;
+    text-transform:uppercase;
+    font-weight:400;
+    color:#FFFFFF;
+    background-color:#2980b9;
+    text-align:center;
+    position:relative;
+    cursor: pointer;
+}
+.button-actions:active{
+    top:0.1em;
+}
+@media all and (max-width:30em){
+    .button-actions{
+    display:block;
+    margin:0.4em auto;
+ }
+}
+
+.quill-body{
+    min-height: 300px;
+}
+
+.quill-container-body{
+    height: max-content;
+}

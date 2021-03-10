@@ -2,7 +2,8 @@ var quillEditor = new Quill('#editor', {
     modules: {
         toolbar: [
             [{ header: [1, 2, false] }],
-            ['bold', 'italic', 'underline', 'code', 'background', 'color']
+            ['bold', 'italic', 'underline', 'code'],
+            [{ 'color': [] }, { 'background': [] }, { 'font': [] }],
         ]
     },
     placeholder: 'Write away ...',
@@ -14,24 +15,56 @@ var quillPreview = new Quill('#preview', {
         toolbar: false
     },
     readOnly: true,
-    placeholder: 'No test to preview yet ...',
+    placeholder: 'No text to preview yet ...',
     theme: 'snow'
 });
 
+function RGBAToHexA(r, g, b, a) {
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+    a = Math.round(a * 255).toString(16);
 
-// function syncEditorPreview() {
+    if (r.length == 1)
+        r = "0" + r;
+    if (g.length == 1)
+        g = "0" + g;
+    if (b.length == 1)
+        b = "0" + b;
+    if (a.length == 1)
+        a = "0" + a;
 
-// }
-
-
-console.log(quillEditor.getContents())
+    return "#" + r + g + b + a;
+}
 
 quillEditor.on('text-change', function (delta, oldDelta, source) {
-    if (source == 'api') {
-        console.log("An API call triggered this change.");
-    } else if (source == 'user') {
-        console.log("A user action triggered this change.");
-        quillPreview.updateContents(delta);
+    if (source == 'user') {
+        quillPreview.setContents(quillEditor.getContents());
+    }
+});
+
+function replacePreview(data) {
+    let newDelta = {
+        ops: []
     }
 
-});
+    for (var i = 0; i < data.tokens.length; i++) {
+        newDelta.ops.push({ insert: data.tokens[i], attributes: { background: RGBAToHexA(255, 0, 0, data.scores[i] / 2) } })
+        newDelta.ops.push({ insert: ' ' })
+    }
+    quillPreview.setContents(newDelta);
+
+}
+
+$('#analyze').click(() => {
+    let txt = quillPreview.getContents().ops[0].insert;
+    $.ajax({
+        url: 'http://localhost:5000/heatmap',
+        crossDomain: true,
+        dataType: 'json',
+        data: { text: txt },
+        success: (d) => {
+            replacePreview(d);
+        }
+    });
+})
