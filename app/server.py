@@ -3,7 +3,6 @@ from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
 # basic imports
-import pickle
 import json
 import sys
 
@@ -13,8 +12,10 @@ from torchtext.data.utils import get_tokenizer
 
 # Import our ML code
 sys.path.append("../ml")
-from selfAttention import SelfAttention
-from attention_utils import sent_embedd, sent_pred
+from attention.selfAttention import SelfAttention
+from attention.attention_utils import sent_embedd, sent_pred
+from attention.utils import load_pytorch_model, load_vocab_dict
+from attention.config import batch_size, max_length
 
 app = Flask(__name__,
             static_url_path='', 
@@ -24,41 +25,16 @@ app = Flask(__name__,
 CORS(app)
 
 
-def load_pytorch_model(modelPath):
-    '''
-    Function to load pytorch model.
-    '''
-    model = SelfAttention(batch_size, output_size, hidden_size, vocab_size, 
-                    embedding_length, weights)
-    checkpoint = torch.load(modelPath)
-    model.load_state_dict(checkpoint)
-    return model
-
-def load_vocab_dict(dictPath):
-    '''
-    Function to load vocab dict.
-    '''
-    with open(dictPath, 'rb') as pickleDict:
-    	vocab_dict = pickle.load(pickleDict)
-    return vocab_dict
 
 # Load vocab_dict
-vocab_dict = load_vocab_dict("../ml/models/vocab_dict.pickle")
+vocab_dict = load_vocab_dict("../ml/models/attention/vocab_dict.pickle")
 
-# Load params
-vocab_size = 100000 + 2
-embedding_length = 100
-hidden_size = 100
-output_size = 2
-batch_size = 32
-max_length = 40
-weights = torch.zeros((vocab_size, embedding_length))
 
 # Use GPU if available
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # load pytorch model
-model = load_pytorch_model("../ml/models/attn_test.pth")
+model = load_pytorch_model("../ml/models/attention/attn_test.pth")
 model.to(device)
 
 # Load tokenizer
