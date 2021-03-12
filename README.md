@@ -9,8 +9,11 @@ Resources
 
 ## ToDos
 *Note : Refer to the [Kanban board](https://github.com/nuwandavek/marvin/projects/1) for details*
-- [ ] Read Papers
-- [ ] Slides for the project proposal talk
-- [ ] Understand current work and DK's code
-- [ ] Begin ML experimentation
-- [ ] Setup app
+- [X] Read Papers
+- [X] Slides for the project proposal talk
+- [X] Understand current work and DK's code
+- [X] Begin ML experimentation
+- [X] Setup app
+- [ ] Get better attention or saliency visualization
+- [ ] Get working auto-style transfer
+- [ ] Work with more styles
