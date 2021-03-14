@@ -49,7 +49,7 @@ function replacePreview(data) {
     }
 
     for (var i = 0; i < data.tokens.length; i++) {
-        newDelta.ops.push({ insert: data.tokens[i], attributes: { background: RGBAToHexA(255, 0, 0, data.scores[i] / 2) } })
+        newDelta.ops.push({ insert: data.tokens[i], attributes: { background: RGBAToHexA(255, 0, 0, data.attns[i] / 10) } })
         newDelta.ops.push({ insert: ' ' })
     }
     quillPreview.setContents(newDelta);
@@ -59,11 +59,12 @@ function replacePreview(data) {
 $('#analyze').click(() => {
     let txt = quillPreview.getContents().ops[0].insert;
     $.ajax({
-        url: 'http://localhost:5000/heatmap',
+        url: 'http://0.0.0.0:5000/stats',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt },
         success: (d) => {
+            console.log(d);
             replacePreview(d);
         }
     });
