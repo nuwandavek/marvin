@@ -18,6 +18,7 @@ def sent_pred(sent, model, tokenizer, device, batch_size):
     input_tensor = tokenizer.encode(sent, return_tensors="pt").to(device)
 
     output = model(input_tensor, output_attentions=True)
+    
     pred = output.logits.argmax(axis=1)
     
     softmax = torch.nn.Softmax(dim=1)
@@ -28,17 +29,21 @@ def sent_pred(sent, model, tokenizer, device, batch_size):
     return pred.detach().cpu().numpy(), scores, attns
     
     
-def process_outputs(pred, scores, attns):
-  	# Sum over attention vectors for each head and handle dimensions and move to cpu
-	viz_attns = np.array([attn.sum(axis=1).cpu().detach().squeeze().numpy() for attn in attns])
-	# Sum over heads
-	viz_attns = viz_attns.sum(axis=0)
-	# Drop cls and sep tokens
-	viz_attns = viz_attns[0, 1:-1].tolist()
-	
-	
-	scores = scores.cpu().detach().squeeze().numpy()
-	
-	pred = pred[0]
-	
-	return pred, scores, viz_attns
+def process_outputs(pred, scores, attns, bert_token_mask, tokens):
+    # Sum over attention vectors for each head and handle dimensions and move to cpu
+    viz_attns = np.array([attn.sum(axis=1).cpu().detach().squeeze().numpy() for attn in attns])
+    # Sum over heads
+    viz_attns = viz_attns.sum(axis=0)
+    # Drop cls and sep tokens
+    viz_attns = viz_attns[0, 1:-1].tolist()
+    viz_attns = [viz_attns[x] for x in bert_token_mask]
+    
+    assert len(viz_attns) == len(tokens)
+    for t in range(len(tokens)):
+        tokens[t]['attention'] = viz_attns[t]
+
+    scores = scores.cpu().detach().squeeze().numpy()
+    
+    pred = pred[0]
+    
+    return pred, scores, tokens

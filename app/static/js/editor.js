@@ -48,9 +48,13 @@ function replacePreview(data) {
         ops: []
     }
 
+    var prev_end = 0
     for (var i = 0; i < data.tokens.length; i++) {
-        newDelta.ops.push({ insert: data.tokens[i], attributes: { background: RGBAToHexA(255, 0, 0, data.attns[i] / 10) } })
-        newDelta.ops.push({ insert: ' ' })
+        let tempToken = data.tokens[i];
+        if (tempToken.start = prev_end + 2) {
+            newDelta.ops.push({ insert: ' ' });
+        }
+        newDelta.ops.push({ insert: tempToken.text, attributes: { background: RGBAToHexA(255, 0, 0, tempToken.attention / 20) } })
     }
     quillPreview.setContents(newDelta);
 
