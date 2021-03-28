@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch import cuda, nn, save, unsqueeze
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
-from tqdm import tqdm, trange
+from tqdm.notebook import tqdm, trange
 import os
 import json
 import numpy as np 
@@ -178,7 +178,7 @@ class JointTrainer(object):
             loss = 0
             for task in self.tasks:
                 all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
-                all_labels_dict[task] = np.append(all_labels_dict[task], inputs['labels_dict'][task], axis=0)
+                all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
                 loss += loss_dict[task]
             e_loss += loss.item()
             epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
@@ -230,7 +230,7 @@ class JointTrainer(object):
             label_ids_tensors = batch[3]
         # [batch x length x task]
         for idx, task in enumerate(self.tasks):
-            label_ids[task] = label_ids_tensors[idx]
+            label_ids[task] = label_ids_tensors[:,idx]
             
         inputs = {'input_ids': batch[0],
                   'attention_mask': batch[1],
