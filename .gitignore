@@ -3,3 +3,5 @@ ml/models/
 .ipynb_checkpoints
 data
 output
+runs
+logs

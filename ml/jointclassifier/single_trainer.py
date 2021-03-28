@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch import cuda, nn, save, unsqueeze
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
-from tqdm import tqdm, trange
+from tqdm.notebook import tqdm, trange
 import os
 import json
 import numpy as np 
@@ -55,7 +55,7 @@ class SingleTrainer(object):
 
         # Train!
         logger.info("***** Running training *****")
-        logger.info(f"Num examples = {self.train_dataset}")
+        logger.info(f"Num examples = {len(self.train_dataset)}")
         logger.info(f"Num Epochs = {self.args.num_train_epochs}")
         logger.info(f"Total train batch size = {self.args.train_batch_size}")
         logger.info(f"Gradient Accumulation steps = {self.args.gradient_accumulation_steps}")
@@ -141,6 +141,7 @@ class SingleTrainer(object):
                             os.makedirs(os.path.dirname(filename))
                         with open(filename,'a') as f:
                             json.dump(result_to_save, f)
+        writer.close()
         return global_step, tr_loss / global_step
 
 
@@ -150,7 +151,7 @@ class SingleTrainer(object):
 
         # Eval!
         logger.info("***** Running Evaluation *****")
-        logger.info(f"Num examples = {self.dev_dataset}")
+        logger.info(f"Num examples = {len(self.dev_dataset)}")
         logger.info(f"Total eval batch size = {self.args.eval_batch_size}")
 
         global_step = 0
@@ -166,7 +167,7 @@ class SingleTrainer(object):
             inputs = self.load_inputs_from_batch(batch)
             loss_dict, logits_dict, labels_dict = self.model(**inputs)
             all_preds = np.append(all_preds, logits_dict[self.task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
-            all_labels = np.append(all_labels, inputs['labels_dict'][self.task], axis=0)
+            all_labels = np.append(all_labels, labels_dict[self.task].detach().cpu().numpy().squeeze(), axis=0)
             loss = loss_dict[self.task]
             e_loss += loss.item()
             epoch_iterator.set_description("step {}/{} loss={:.2f}".format(

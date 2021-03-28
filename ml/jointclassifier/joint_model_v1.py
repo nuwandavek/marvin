@@ -8,7 +8,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
     A class that inherits from DistilBertForSequenceClassification, but extends the model to 
     have multiple classifiers at the end to perform joint classification over multiple tasks.
     '''
-    def __init__(self, config, tasks, model_args):
+    def __init__(self, config, tasks, model_args, task_if_single, joint):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.tasks = tasks
@@ -21,7 +21,8 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         self.classifier = nn.ModuleDict(self.classifiers)
         self.dropout = nn.Dropout(config.seq_classif_dropout)
         self.skip_preclassifier = model_args.skip_preclassifier
-
+        self.task_if_single = task_if_single
+        self.joint = joint
         self.init_weights()
         
     def forward(
@@ -62,13 +63,17 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         
         logits_dict = {}
         selected_labels_dict = {}
-        loss_dict = {task:0 for task in self.tasks}
-        for t, task in enumerate(self.tasks):
+        if self.joint:
+            tasks = self.tasks
+        else:
+            tasks = [self.task_if_single]
+        loss_dict = {task:0 for task in tasks}
+        for t, task in enumerate(tasks):
             logits = self.classifier[task](pooled_output)  # (bs, num_labels)
             logits = logits[task_ids==t]
             if len(logits)==0:
                 continue
-            labels = labels_all[:,t][task_ids==t]
+            labels = labels_all[task][task_ids==t]
             
             logits_dict[task] = logits
             selected_labels_dict[task] = labels
