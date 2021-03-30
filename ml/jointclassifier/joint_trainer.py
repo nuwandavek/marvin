@@ -177,9 +177,10 @@ class JointTrainer(object):
             loss_dict, logits_dict, labels_dict = self.model(**inputs)
             loss = 0
             for task in self.tasks:
-                all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
-                all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
-                loss += loss_dict[task]
+                if task in logits_dict:
+                    all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
+                    all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
+                    loss += loss_dict[task]
             e_loss += loss.item()
             epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
                     step,
