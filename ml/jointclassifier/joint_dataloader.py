@@ -3,8 +3,9 @@ import torch
 from torch.utils.data import TensorDataset
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
 
-def load_dataset(data_dir, tokenizer, model_name, tasks, mode):
+def load_dataset(data_dir, tokenizer, model_name, tasks, mode, n_proc = 16):
 
     all_input_ids = None
     all_attention_mask = None
@@ -18,9 +19,11 @@ def load_dataset(data_dir, tokenizer, model_name, tasks, mode):
         filename = os.path.join(data_dir, task, config['input_files'][mode])
         data = pd.read_csv(filename, header=None)
         task_labels = []
-        for r, row in tqdm(data.iterrows()):
-            sentence, label = row
-            tokenized = tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
+        chunk_size = len(data)//n_proc
+        for chunk in tqdm(np.array_split(data, chunk_size)):
+        # for r, row in tqdm(data.iterrows()):
+        #     sentence, label = row
+            tokenized = tokenizer(list(chunk[0]), padding='max_length', return_tensors='pt', truncation = True)
             if all_input_ids is None:
                 all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
                 if 'distilbert' not in model_name:
@@ -32,7 +35,8 @@ def load_dataset(data_dir, tokenizer, model_name, tasks, mode):
                 if 'distilbert' not in model_name:
                     all_token_type_ids = torch.cat((all_token_type_ids, tokenized['token_type_ids']), 0)
                 all_task_ids = torch.cat((all_task_ids, torch.ones(len(tokenized['input_ids'])) * t), 0)
-            task_labels += [label for i in range(len(tokenized['input_ids']))]
+            # task_labels += [label for i in range(len(tokenized['input_ids']))]
+            task_labels += list(chunk[1])
         task_labels = torch.tensor(task_labels, dtype=torch.long)
         task_labels_full = torch.zeros((len(data),len(tasks)), dtype = torch.long)
         task_labels_full[:,t] = task_labels
