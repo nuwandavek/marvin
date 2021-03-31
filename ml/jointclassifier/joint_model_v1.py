@@ -36,7 +36,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         output_hidden_states=None,
         task_ids = None
     ):
-        r"""
+        """
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
             Labels for computing the sequence classification/regression loss. Indices should be in :obj:`[0, ...,
             config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
@@ -86,3 +86,37 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
                     loss_dict[task] += loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
         return (loss_dict, logits_dict, selected_labels_dict)
+
+    def predict(
+        self,
+        input_ids, 
+        attention_mask=None,
+        head_mask=None,
+        inputs_embeds=None,
+        output_attentions=None,
+        output_hidden_states=None
+    ):
+        distilbert_output = self.distilbert(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states
+        )
+        hidden_state = distilbert_output[0]  # (1, seq_len, dim)
+        pooled_output = hidden_state[:, 0]  # (1, dim)
+        if not self.skip_preclassifier:
+            pooled_output = self.pre_classifier(pooled_output)  # (1, dim)
+            pooled_output = nn.ReLU()(pooled_output)  # (1, dim)
+        pooled_output = self.dropout(pooled_output)  # (1, dim)
+        
+        logits_dict = {}
+        for t, task in enumerate(self.tasks):
+            logits_dict[task] = torch.sigmoid(self.classifier[task](pooled_output)).detach().cpu().numpy().squeeze()  # (1, num_labels)
+        
+        return logits_dict
+        
+    
+
+    

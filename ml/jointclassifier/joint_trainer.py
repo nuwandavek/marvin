@@ -19,6 +19,7 @@ class JointTrainer(object):
         model: Any,
         train_dataset: Optional[TensorDataset] = None,
         dev_dataset: Optional[TensorDataset] = None,
+        idx_to_classes: Optional[Dict[str, Any]] = None
     ) -> None:
         self.args, self.model_args, self.data_args = args
         self.train_dataset = train_dataset
@@ -30,6 +31,7 @@ class JointTrainer(object):
             "cuda" if cuda.is_available() and not self.args.no_cuda else "cpu")
         self.model.to(self.device)
         self.tasks = self.data_args.task.split('+')
+        self.idx_to_classes = idx_to_classes
         
 
 
@@ -146,11 +148,11 @@ class JointTrainer(object):
                         result_to_save['best_global_step'] = best_model_step
                         result_to_save['best_global_epoch'] = best_model_epoch
                         # save log
-                        filename = f'logs/logs_train_joint_{self.model_args.model_nick}.txt'
+                        filename = f'logs/logs_train_joint_{self.model_args.model_nick}_{self.data_args.task}.jsonl'
                         if not os.path.exists(os.path.dirname(filename)):
                             os.makedirs(os.path.dirname(filename))
                         with open(filename,'a') as f:
-                            json.dump(result_to_save, f)
+                            f.writelines(json.dumps(result_to_save) + '\n')
         return global_step, tr_loss / global_step
 
 
@@ -241,3 +243,19 @@ class JointTrainer(object):
         if 'distilbert' not in self.model_args.model_name_or_path:
             inputs['token_type_ids'] = batch[2]
         return inputs
+
+
+    def predict_for_sentence(self, sentence, tokenizer):
+        self.model.eval()
+        tokenized_sentence = tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
+        input_ids = tokenized_sentence['input_ids'].to(self.device)
+        attention_mask = tokenized_sentence['attention_mask'].to(self.device)
+        if 'distilbert' not in self.model_args.model_name_or_path:
+            token_type_ids = tokenized_sentence['token_type_ids'].to(self.device)
+            logits_dict = self.model.predict(input_ids, attention_mask, token_type_ids)
+        else:
+            logits_dict = self.model.predict(input_ids, attention_mask)
+        predictions = {}
+        for task in self.tasks:
+            predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(logits_dict[task]))], "prob": np.max(logits_dict[task])}
+        return predictions

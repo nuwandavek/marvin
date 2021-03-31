@@ -12,10 +12,12 @@ def load_dataset(data_dir, tokenizer, model_name, tasks, mode, n_proc = 16):
     all_token_type_ids = None
     all_labels = None
     all_task_ids = None
+    idx_to_classes = {}
     for t, task in enumerate(tasks) :
         config_file = os.path.join(data_dir, task, "config.json")
         config = json.load(open(config_file))
             
+        idx_to_classes[task] = config['classes']
         filename = os.path.join(data_dir, task, config['input_files'][mode])
         data = pd.read_csv(filename, header=None)
         task_labels = []
@@ -57,7 +59,7 @@ def load_dataset(data_dir, tokenizer, model_name, tasks, mode, n_proc = 16):
     if 'distilbert' in model_name:
         all_token_type_ids = torch.zeros_like(all_input_ids)
     dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_task_ids)
-    return dataset
+    return dataset, idx_to_classes
 
         
 
