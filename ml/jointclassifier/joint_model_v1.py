@@ -84,8 +84,16 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
                 else:
                     loss_fct = nn.CrossEntropyLoss()
                     loss_dict[task] += loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                    
+        if output_hidden_states:
+            for h_state in distilbert_output.hidden_states:
+                h_state.retain_grad()
 
-        return (loss_dict, logits_dict, selected_labels_dict)
+            return (loss_dict, logits_dict, selected_labels_dict, distilbert_output.hidden_states)
+
+        else:
+            return (loss_dict, logits_dict, selected_labels_dict)
+        
 
     def predict(
         self,
