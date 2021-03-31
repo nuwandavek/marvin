@@ -1,0 +1,50 @@
+1 excellent chinese and superb service .
+original: excellent food and friendly service .  #Style independent representation
+transfer: terrible food and poor customer service . #Style transfer
+
+1 the waitresses are friendly and helpful .
+original: the employees are friendly and helpful .
+transfer: the employees are rude and rude helpful .
+
+
+In this paper, we introduce a refined alignment of sentence representations across text corpora.
+We learn an encoder that takes a sentence and its original style indicator as input, and maps it to
+a style-independent content representation. This is then passed to a style-dependent decoder for
+rendering. We do not use typical VAEs for this mapping since it is imperative to keep the latent content
+representation rich and unperturbed. Indeed, richer latent content representations are much harder to
+align across the corpora and therefore they offer more informative content constraints. Moreover, we
+reap additional information from cross-generated (style-transferred) sentences, thereby getting two
+distributional alignment constraints. For example, positive sentences that are style-transferred into
+negative sentences should match, as a population, the given set of negative sentences
+
+link: python style_transfer.py --online_testing ../data/yelp/sentiment.test --output ../tmp/sentiment.test --vocab ../model/yelp.vocab --model ../model/model --load_model true --beam 8
+
+
+TRAIN
+python style_transfer.py --train ../data/yelp/sentiment.train --dev ../data/yelp/sentiment.dev --output ../tmp/sentiment.dev --vocab ../tmp/yelp.vocab --model ../tmp/model
+
+TEST
+python style_transfer.py --test ../data/yelp/sentiment.test --output ../tmp/sentiment.test --vocab ../tmp/yelp.vocab --model ../tmp/model --load_model true --beam 8
+
+if possible , would you forward a copy of your filing to me ?
+
+paper outline: 
+Introduction:
+Methods we tried
+1. HMM, POMDPs
+2. DQN + Predictron-- Deep RL method
+3.
+
+
+
+Data: 
+
+Time:
+
+
+1. Worst state more cost to repair
+2. 
+
+
+
+
