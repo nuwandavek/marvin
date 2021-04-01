@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple, Optional, DefaultDict, Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch import cuda, nn, save, unsqueeze
+from torch import cuda, nn, save, unsqueeze, sigmoid, stack
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
 from tqdm.notebook import tqdm, trange
 import os
@@ -25,10 +25,8 @@ class JointTrainer(object):
         self.train_dataset = train_dataset
         self.dev_dataset = dev_dataset
         self.model = model
-
         # GPU or CPU
-        self.device = (
-            "cuda" if cuda.is_available() and not self.args.no_cuda else "cpu")
+        self.device = ("cuda" if cuda.is_available() and not self.args.no_cuda else "cpu")
         self.model.to(self.device)
         self.tasks = self.data_args.task.split('+')
         self.idx_to_classes = idx_to_classes
@@ -245,17 +243,43 @@ class JointTrainer(object):
         return inputs
 
 
-    def predict_for_sentence(self, sentence, tokenizer):
+    def predict_for_sentence(self, sentence, tokenizer, salience=False):
         self.model.eval()
         tokenized_sentence = tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
         input_ids = tokenized_sentence['input_ids'].to(self.device)
         attention_mask = tokenized_sentence['attention_mask'].to(self.device)
-        if 'distilbert' not in self.model_args.model_name_or_path:
+        if 'distilbert' not in self.model_args.model_nick:
             token_type_ids = tokenized_sentence['token_type_ids'].to(self.device)
-            logits_dict = self.model.predict(input_ids, attention_mask, token_type_ids)
+            if salience:
+                logits_dict, hidden_states = self.model.predict(input_ids, attention_mask, token_type_ids, output_hidden_states=True)
+            else:
+                logits_dict = self.model.predict(input_ids, attention_mask, token_type_ids)
+
         else:
-            logits_dict = self.model.predict(input_ids, attention_mask)
+            if salience:
+                logits_dict, hidden_states = self.model.predict(input_ids, attention_mask, output_hidden_states=True)
+            else:
+                logits_dict = self.model.predict(input_ids, attention_mask)
+
         predictions = {}
-        for task in self.tasks:
-            predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(logits_dict[task]))], "prob": np.max(logits_dict[task])}
-        return predictions
+        saliency = {}
+        if salience:
+            for task in self.tasks:
+                saliency[task] = {}
+                preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
+                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": np.max(preds)}
+                class_score_0, class_score_1 = logits_dict[task][0]
+                self.model.zero_grad()
+                class_score_0.backward(retain_graph=True)
+                grads = [h_state.grad for h_state in hidden_states]
+                saliency[task][self.idx_to_classes[task]["0"]] = stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1)
+                self.model.zero_grad()
+                class_score_1.backward(retain_graph=True)
+                grads = [h_state.grad for h_state in hidden_states]
+                saliency[task][self.idx_to_classes[task]["1"]] = stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1)
+            return predictions, saliency
+        else:
+            for task in self.tasks:
+                preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
+                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": np.max(preds)}
+            return predictions

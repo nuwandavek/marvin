@@ -32,8 +32,6 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         head_mask=None,
         inputs_embeds=None,
         labels_all=None,
-        output_attentions=None,
-        output_hidden_states=None,
         task_ids = None
     ):
         """
@@ -51,10 +49,8 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
             attention_mask=attention_mask,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states
         )
-        hidden_state = distilbert_output[0]  # (bs, seq_len, dim)
+        hidden_state = distilbert_output['last_hidden_state']  # (bs, seq_len, dim)
         pooled_output = hidden_state[:, 0]  # (bs, dim)
         if not self.skip_preclassifier:
             pooled_output = self.pre_classifier(pooled_output)  # (bs, dim)
@@ -85,14 +81,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
                     loss_fct = nn.CrossEntropyLoss()
                     loss_dict[task] += loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
                     
-        if output_hidden_states:
-            for h_state in distilbert_output.hidden_states:
-                h_state.retain_grad()
-
-            return (loss_dict, logits_dict, selected_labels_dict, distilbert_output.hidden_states)
-
-        else:
-            return (loss_dict, logits_dict, selected_labels_dict)
+        return (loss_dict, logits_dict, selected_labels_dict)
         
 
     def predict(
@@ -112,7 +101,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states
         )
-        hidden_state = distilbert_output[0]  # (1, seq_len, dim)
+        hidden_state = distilbert_output['last_hidden_state']  # (1, seq_len, dim)
         pooled_output = hidden_state[:, 0]  # (1, dim)
         if not self.skip_preclassifier:
             pooled_output = self.pre_classifier(pooled_output)  # (1, dim)
@@ -121,9 +110,16 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         
         logits_dict = {}
         for t, task in enumerate(self.tasks):
-            logits_dict[task] = torch.sigmoid(self.classifier[task](pooled_output)).detach().cpu().numpy().squeeze()  # (1, num_labels)
+            logits_dict[task] = self.classifier[task](pooled_output)
         
-        return logits_dict
+        if output_hidden_states:
+            all_hidden_states = distilbert_output['hidden_states']
+            for h_state in all_hidden_states:
+                h_state.retain_grad()
+
+            return logits_dict, all_hidden_states
+        else:
+            return logits_dict
         
     
 
