@@ -1,0 +1,9 @@
+Run the below script in the code folder.
+
+Folder:
+Create a "data" folder at the same level as "code" folder. Add train, dev, test files. For eg: File Names: "sentiment.train.0", "sentiment.train.1", "sentiment.dev.0", ""sentiment.dev.1", "sentiment.test.0", "sentiment.test.1"
+Please name the corpora of two styles by "x.0" and "x.1" respectively, and use "x" to refer to them in options. Each file should consist of one sentence per line with tokens separated by a space.
+
+TRAIN:
+To train a model, first create a tmp/ folder (where the model and results will be saved), then go to the code/ folder and run the following command:
+python style_transfer.py --train ../data/sentiment.train --dev ../data/sentiment.dev --output ../tmp/sentiment.dev --vocab ../tmp/yelp.vocab --model ../tmp/model
