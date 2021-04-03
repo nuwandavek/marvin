@@ -22,6 +22,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
             self.classifiers[task] = nn.Linear(intermediate_layer_dim, config.num_labels)
         
         self.classifier = nn.ModuleDict(self.classifiers)
+        self.intermediates = nn.ModuleDict(self.intermediates)
         self.dropout = nn.Dropout(config.seq_classif_dropout)
         self.skip_preclassifier = model_args.skip_preclassifier
         self.task_if_single = task_if_single
@@ -115,8 +116,9 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         
         logits_dict = {}
         for t, task in enumerate(self.tasks):
-            logits_dict[task] = self.classifier[task](pooled_output)
-        
+            logits = self.intermediates[task](pooled_output)  # (bs, intermediate_layer_dim)
+            logits = nn.ReLU()(logits)
+            logits_dict[task] = self.classifier[task](logits)  # (bs, num_labels)        
         if output_hidden_states:
             all_hidden_states = distilbert_output['hidden_states']
             for h_state in all_hidden_states:
