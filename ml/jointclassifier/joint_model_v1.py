@@ -8,7 +8,7 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
     A class that inherits from DistilBertForSequenceClassification, but extends the model to 
     have multiple classifiers at the end to perform joint classification over multiple tasks.
     '''
-    def __init__(self, config, tasks, model_args, task_if_single, joint):
+    def __init__(self, config, tasks, model_args, task_if_single, joint, intermediate_layer_dim = 100):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.tasks = tasks
@@ -16,8 +16,11 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
         self.pre_classifier = nn.Linear(config.dim, config.dim)
         # List of classifiers
         self.classifiers = {}
+        self.intermediates = {}
         for task in tasks:
-            self.classifiers[task] = nn.Linear(config.dim, config.num_labels)
+            self.intermediates[task] = nn.Linear(config.dim, intermediate_layer_dim)
+            self.classifiers[task] = nn.Linear(intermediate_layer_dim, config.num_labels)
+        
         self.classifier = nn.ModuleDict(self.classifiers)
         self.dropout = nn.Dropout(config.seq_classif_dropout)
         self.skip_preclassifier = model_args.skip_preclassifier
@@ -65,7 +68,9 @@ class JointSeqClassifier(DistilBertPreTrainedModel):
             tasks = [self.task_if_single]
         loss_dict = {task:0 for task in tasks}
         for t, task in enumerate(tasks):
-            logits = self.classifier[task](pooled_output)  # (bs, num_labels)
+            logits = self.intermediates[task](pooled_output)  # (bs, intermediate_layer_dim)
+            logits = nn.ReLU()(logits)
+            logits = self.classifier[task](logits)  # (bs, num_labels)
             logits = logits[task_ids==t]
             if len(logits)==0:
                 continue
