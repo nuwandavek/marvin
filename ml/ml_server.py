@@ -17,7 +17,16 @@ import attention.attention_utils
 import bert.bert_utils
 from attention.utils import load_pytorch_model, load_vocab_dict
 from config.model_config import get_configs
-#from attention.config import batch_size, max_length
+
+# Joint Model imports
+from jointclassifier.joint_args import ModelArguments, DataTrainingArguments, TrainingArguments
+from jointclassifier.joint_dataloader import load_dataset
+from jointclassifier.joint_trainer import JointTrainer
+from jointclassifier.single_trainer import SingleTrainer
+from jointclassifier.joint_model_v1 import JointSeqClassifier
+
+from transformers import HfArgumentParser, AutoConfig, AutoTokenizer
+import os
 
 
 # Load spacy for tokenizing
@@ -25,6 +34,7 @@ import spacy
 # Load English tokenizer, tagger, parser and NER
 nlp = spacy.load("en_core_web_sm")
 
+json.encoder.FLOAT_REPR = lambda o: format(o, '.2f')
 
 app = Flask(__name__)
 CORS(app)
@@ -63,6 +73,42 @@ elif model_type == "bert":
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
+model_args = ModelArguments(
+    model_name_or_path="distilbert-base-cased",
+    model_nick="distilbert",
+    cache_dir="./models/cache"
+)
+
+data_args = DataTrainingArguments(
+    max_seq_len=64,
+    task="formality+jokes"
+)
+
+training_args = TrainingArguments(
+    output_dir = "./models/distilbert/formality+jokes/joint",
+    train_jointly= True
+)
+idx_to_classes = {
+    'formality': {'0': 'informal', '1': 'formal'},
+    'jokes': {'0': 'nojoke', '1': 'joke'}
+}
+
+model_joint = JointSeqClassifier.from_pretrained(
+    training_args.output_dir,
+    tasks=data_args.task.split('+'),
+    model_args=model_args,
+    task_if_single=None, 
+    joint = training_args.train_jointly
+)
+trainer_joint = JointTrainer(
+    [training_args,model_args, data_args], 
+    model_joint, idx_to_classes = idx_to_classes
+)
+tokenizer_joint = AutoTokenizer.from_pretrained(
+    model_args.model_name_or_path, 
+    cache_dir=model_args.cache_dir,
+    model_max_length = data_args.max_seq_len
+)
 
 @app.route("/hello")
 def hello():
@@ -140,5 +186,27 @@ def get_classify_and_attn():
         print(response)
         return json.dumps(response), 201
   
+
+@app.route('/joint_classification', methods = ['GET'])
+def get_joint_classify_and_salience():
+    '''
+    Inputs:
+    Input is assumed to be json of the form 
+      {text: "some text"}.
+  
+      Results:
+      Run ML classification model on text. 
+      
+      Returns:
+    classification and attention weights
+      '''
+    # Get text input from request
+    text = request.args.get('text', type = str)
+    text = text.strip()
+    res = trainer_joint.predict_for_sentence(text, tokenizer_joint, salience=True)
+    return res, 200
+
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True)

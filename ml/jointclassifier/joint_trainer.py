@@ -262,24 +262,24 @@ class JointTrainer(object):
                 logits_dict = self.model.predict(input_ids, attention_mask)
 
         predictions = {}
-        saliency = {}
         if salience:
             for task in self.tasks:
-                saliency[task] = {}
                 preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
-                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": np.max(preds)}
+                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": str(np.max(preds)), 'salience' : {}}
                 class_score_0, class_score_1 = logits_dict[task][0]
                 self.model.zero_grad()
                 class_score_0.backward(retain_graph=True)
                 grads = [h_state.grad for h_state in hidden_states]
-                saliency[task][self.idx_to_classes[task]["0"]] = stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1)
+                temp = list(stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1).numpy())
+                predictions[task]['salience'][self.idx_to_classes[task]["0"]] = [str(x) for x in temp if x!=0]
                 self.model.zero_grad()
                 class_score_1.backward(retain_graph=True)
                 grads = [h_state.grad for h_state in hidden_states]
-                saliency[task][self.idx_to_classes[task]["1"]] = stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1)
-            return predictions, saliency
+                temp = list(stack(grads).abs().max(axis=0)[0].squeeze().mean(axis=1).numpy())
+                predictions[task]['salience'][self.idx_to_classes[task]["1"]] = [str(x) for x in temp if x!=0]
+            return predictions
         else:
             for task in self.tasks:
                 preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
-                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": np.max(preds)}
+                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": str(np.max(preds))}
             return predictions
