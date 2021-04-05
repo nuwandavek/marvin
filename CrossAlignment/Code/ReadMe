@@ -6,4 +6,4 @@ Please name the corpora of two styles by "x.0" and "x.1" respectively, and use "
 
 TRAIN:
 To train a model, first create a tmp/ folder (where the model and results will be saved), then go to the code/ folder and run the following command:
-python style_transfer.py --train ../data/sentiment.train --dev ../data/sentiment.dev --output ../tmp/sentiment.dev --vocab ../tmp/yelp.vocab --model ../tmp/model
+python style_transfer.py --train ../data/yelp/sentiment.train --dev ../data/yelp/sentiment.dev --output ../tmp/sentiment.dev --vocab ../tmp/yelp.vocab --model ../tmp/model
