@@ -168,7 +168,7 @@ def get_classify_and_attn():
         for token in [t.text for t in doc]:
             occ = text[sentence_seen:].find(token)
             start = occ + sentence_seen
-            end = sentence_seen + occ + len(token)
+            end = start + len(token)
             sentence_seen = sentence_seen + len(token) + occ
             tokens.append({'text' : token, 'start' : start, 'end' : end})
 

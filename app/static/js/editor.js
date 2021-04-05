@@ -10,15 +10,6 @@ var quillEditor = new Quill('#editor', {
     theme: 'snow'
 });
 
-var quillPreview = new Quill('#preview', {
-    modules: {
-        toolbar: false
-    },
-    readOnly: true,
-    placeholder: 'No text to preview yet ...',
-    theme: 'snow'
-});
-
 function RGBAToHexA(r, g, b, a) {
     r = r.toString(16);
     g = g.toString(16);
@@ -37,39 +28,66 @@ function RGBAToHexA(r, g, b, a) {
     return "#" + r + g + b + a;
 }
 
-quillEditor.on('text-change', function (delta, oldDelta, source) {
-    if (source == 'user') {
-        quillPreview.setContents(quillEditor.getContents());
+function setSliders(data) {
+    let formalProb = 0;
+    let humorProb = 0;
+    if (data.formality.class === 'formal') {
+        formalProb = data.formality.prob;
     }
-});
-
-function replacePreview(data) {
-    let newDelta = {
-        ops: []
+    else if (data.formality.class === 'informal') {
+        formalProb = 1 - data.formality.prob
     }
+    if (data.jokes.class === 'joke') {
+        humorProb = data.jokes.prob;
+    }
+    else if (data.jokes.class === 'nojoke') {
+        humorProb = 1 - data.jokes.prob
+    }
+    $('#formality-slider').slider('set value', formalProb * 100);
+    $('#humor-slider').slider('set value', humorProb * 100);
 
-    var prev_end = 0
-    for (var i = 0; i < data.tokens.length; i++) {
-        let tempToken = data.tokens[i];
-        if (tempToken.start = prev_end + 2) {
-            newDelta.ops.push({ insert: ' ' });
+    $('#formality-value').html((formalProb * 100).toFixed(2));
+    $('#humor-value').html((humorProb * 100).toFixed(2));
+}
+
+function displayHeatmap(data) {
+    output_txt = ''
+    recent_end = 0
+    for (let i = 0; i < data.tokens.length; i++) {
+        let currToken = data.tokens[i]
+        if (recent_end != currToken.start) {
+            output_txt += " ";
         }
-        newDelta.ops.push({ insert: tempToken.text, attributes: { background: RGBAToHexA(255, 0, 0, tempToken.attention / 20) } })
+        output_txt += "<span style='background : " + RGBAToHexA(255, 0, 0, currToken.attention / 20) + "'>" + currToken.text + "</span>"
     }
-    quillPreview.setContents(newDelta);
+    $('#preview').html(output_txt);
 
 }
 
 $('#analyze').click(() => {
-    let txt = quillPreview.getContents().ops[0].insert;
+    let txt = quillEditor.getContents().ops[0].insert;
     $.ajax({
         url: 'http://0.0.0.0:5000/stats',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt },
         success: (d) => {
-            console.log(d);
-            replacePreview(d);
+            displayHeatmap(d.attn);
+            setSliders(d.joint);
         }
     });
 })
+
+$('#formality-slider').slider({
+    min: 0,
+    max: 100,
+    start: 0,
+    step: 1
+});
+
+$('#humor-slider').slider({
+    min: 0,
+    max: 100,
+    start: 0,
+    step: 1
+});

@@ -45,9 +45,10 @@ def get_stats():
 	text = request.args.get('text', type = str)
 
 	# Get attention heatmap
-	response = requests.get('http://0.0.0.0:5001/heatmap', params={'text': text}).json()
+	response_attn = requests.get('http://0.0.0.0:5001/heatmap', params={'text': text}).json()
+	response_joint = requests.get('http://0.0.0.0:5001/joint_classification', params={'text': text}).json()
 
-	return json.dumps(response), 201
+	return {'attn' : response_attn, 'joint' : response_joint}, 201
   
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
