@@ -1,3 +1,9 @@
+var result = null;
+
+function storeResult(data) {
+    result = data;
+}
+
 var quillEditor = new Quill('#editor', {
     modules: {
         toolbar: [
@@ -61,7 +67,78 @@ function displayHeatmap(data) {
         output_txt += "<span style='background : " + RGBAToHexA(255, 0, 0, currToken.attention / 20) + "'>" + currToken.text + "</span>"
     }
     $('#preview').html(output_txt);
+}
 
+
+function displayFormalSalienceHeatmap(data) {
+    if (data != null) {
+	output_txt = ''
+	recent_end = 0
+	// class_label = data.formality.class
+	class_label = 'formal';
+	for (let i = 0; i < data.tokens.length; i++) {
+            let currToken = data.tokens[i]
+            if (recent_end != currToken.start) {
+		output_txt += " ";
+            }
+            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
+	}
+	$('#preview').html(output_txt);
+    }
+}
+
+
+function displayHumorSalienceHeatmap(data) {
+    if (data != null) {
+	output_txt = ''
+	recent_end = 0
+	// class_label = data.jokes.class
+	class_label = 'joke';
+	for (let i = 0; i < data.tokens.length; i++) {
+            let currToken = data.tokens[i]
+            if (recent_end != currToken.start) {
+		output_txt += " ";
+            }
+            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
+	}
+	$('#preview').html(output_txt);
+    }
+}
+
+
+function displayInformalSalienceHeatmap(data) {
+    if (data != null) {
+	output_txt = ''
+	recent_end = 0
+	// class_label = data.formality.class
+	class_label = 'informal';
+	for (let i = 0; i < data.tokens.length; i++) {
+            let currToken = data.tokens[i]
+            if (recent_end != currToken.start) {
+		output_txt += " ";
+            }
+            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
+	}
+	$('#preview').html(output_txt);
+    }
+}
+
+
+function displayNonHumorSalienceHeatmap(data) {
+    if (data != null) {
+	output_txt = ''
+	recent_end = 0
+	// class_label = data.jokes.class
+	class_label = 'nojoke';
+	for (let i = 0; i < data.tokens.length; i++) {
+            let currToken = data.tokens[i]
+            if (recent_end != currToken.start) {
+		output_txt += " ";
+            }
+            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
+	}
+	$('#preview').html(output_txt);
+    }
 }
 
 $('#analyze').click(() => {
@@ -72,11 +149,30 @@ $('#analyze').click(() => {
         dataType: 'json',
         data: { text: txt },
         success: (d) => {
+	    storeResult(d);
             displayHeatmap(d.attn);
             setSliders(d.joint);
         }
     });
 })
+
+
+$('#formal-salience').click(() => {
+    displayFormalSalienceHeatmap(result.joint);
+})
+
+$('#humor-salience').click(() => {
+    displayHumorSalienceHeatmap(result.joint);
+})
+
+$('#informal-salience').click(() => {
+    displayInformalSalienceHeatmap(result.joint);
+})
+
+$('#non-humor-salience').click(() => {
+    displayNonHumorSalienceHeatmap(result.joint);
+})
+
 
 $('#formality-slider').slider({
     min: 0,

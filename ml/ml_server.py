@@ -140,7 +140,7 @@ def get_classify_and_attn():
         # Get model outputs and attention matrix
         output, atten = attention.attention_utils.sent_pred(text, model, vocab_dict, 
                                 tokenizer, max_length, device, batch_size)
-        # Sum over attention vectorto get single value for each token
+        # Sum over attention vector to get single value for each token
         token_attentions = atten[0].sum(axis=0).cpu().detach().tolist()[:len(tokens)]
         # Get model's class prediction
         preds = output.argmax(axis=1)
@@ -183,7 +183,7 @@ def get_classify_and_attn():
         response['class id'] = int(pred)
         response['class'] = class_labels_dict[pred]	
         response['scores'] = f"Class Scores: {class_labels_dict[0]} : {scores[0]*100:.2f}%, {class_labels_dict[1]} : {scores[1]*100:.2f}%"
-        print(response)
+        print(f"Heatmap RES\n{response}")
         return json.dumps(response), 201
   
 
@@ -203,7 +203,24 @@ def get_joint_classify_and_salience():
     # Get text input from request
     text = request.args.get('text', type = str)
     text = text.strip()
+    
+    doc = nlp(text)
+    tokens = []
+    sentence_seen = 0
+
+    for token in [t.text for t in doc]:
+        occ = text[sentence_seen:].find(token)
+        start = occ + sentence_seen
+        end = start + len(token)
+        sentence_seen = sentence_seen + len(token) + occ
+        tokens.append({'text' : token, 'start' : start, 'end' : end})
+    
+    joint_tokens = tokenizer_joint.convert_ids_to_tokens(tokenizer_joint.encode(text))[1:-1]
+    joint_token_mask = [i for i,b in enumerate(joint_tokens) if '##' not in b]
+    
     res = trainer_joint.predict_for_sentence(text, tokenizer_joint, salience=True)
+    res['tokens'] = tokens
+    print(f"JointClassify RES\n{res}")
     return res, 200
 
 
