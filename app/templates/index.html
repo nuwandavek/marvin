@@ -7,8 +7,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@900&display=swap" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.8.7/semantic.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.8.7/semantic.min.js"></script>
 </head>
 
 <body>
@@ -23,15 +24,26 @@
                     <div id="editor" class="quill-body">
                     </div>
                 </div>
-                <div id="preview-container" class="col-xs-6 start-xs  quill-container-body">
-                    <div class="ql-toolbar ql-snow preview-head middle-xs">
-                        <!-- <span>Preview ...</span> -->
+                <div id="preview-container" class="col-xs-6 start-xs">
+                    <div id="preview" class="preview-body">
+                        Click the Analyze button to get started ...
                     </div>
-                    <div id="preview" class="quill-body">
+                    <div id="sliders">
+                        <p>Formality : <span id="formality-value">0</span></p>
+                        <div class="ui teal slider" id="formality-slider"></div>
+                        <p>Humor : <span id="humor-value">0</span></p>
+                        <div class="ui blue slider" id="humor-slider"></div>
+                        <button class="ui primary button" id="analyze">Analyze</button>
+                        <button class="ui primary button" id="formal-salience">Get Formal Feature Importance</button>
+                        <button class="ui primary button" id="humor-salience">Get Humor Importance</button>
+                        <button class="ui primary button" id="informal-salience">Get Informal Feature Importance</button>
+                        <button class="ui primary button" id="non-humor-salience">Get Non-Humor Importance</button>
+
                     </div>
                 </div>
+
+
             </div>
-            <button class="button-actions" id="analyze">Analyze</button>
 
         </div>
     </div>

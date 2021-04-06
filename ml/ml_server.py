@@ -17,7 +17,16 @@ import attention.attention_utils
 import bert.bert_utils
 from attention.utils import load_pytorch_model, load_vocab_dict
 from config.model_config import get_configs
-#from attention.config import batch_size, max_length
+
+# Joint Model imports
+from jointclassifier.joint_args import ModelArguments, DataTrainingArguments, TrainingArguments
+from jointclassifier.joint_dataloader import load_dataset
+from jointclassifier.joint_trainer import JointTrainer
+from jointclassifier.single_trainer import SingleTrainer
+from jointclassifier.joint_model_v1 import JointSeqClassifier
+
+from transformers import HfArgumentParser, AutoConfig, AutoTokenizer
+import os
 
 
 # Load spacy for tokenizing
@@ -25,6 +34,7 @@ import spacy
 # Load English tokenizer, tagger, parser and NER
 nlp = spacy.load("en_core_web_sm")
 
+json.encoder.FLOAT_REPR = lambda o: format(o, '.2f')
 
 app = Flask(__name__)
 CORS(app)
@@ -63,6 +73,42 @@ elif model_type == "bert":
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
+model_args = ModelArguments(
+    model_name_or_path="distilbert-base-cased",
+    model_nick="distilbert",
+    cache_dir="./models/cache"
+)
+
+data_args = DataTrainingArguments(
+    max_seq_len=64,
+    task="formality+jokes"
+)
+
+training_args = TrainingArguments(
+    output_dir = "./models/distilbert/formality+jokes/joint",
+    train_jointly= True
+)
+idx_to_classes = {
+    'formality': {'0': 'informal', '1': 'formal'},
+    'jokes': {'0': 'nojoke', '1': 'joke'}
+}
+
+model_joint = JointSeqClassifier.from_pretrained(
+    training_args.output_dir,
+    tasks=data_args.task.split('+'),
+    model_args=model_args,
+    task_if_single=None, 
+    joint = training_args.train_jointly
+)
+trainer_joint = JointTrainer(
+    [training_args,model_args, data_args], 
+    model_joint, idx_to_classes = idx_to_classes
+)
+tokenizer_joint = AutoTokenizer.from_pretrained(
+    model_args.model_name_or_path, 
+    cache_dir=model_args.cache_dir,
+    model_max_length = data_args.max_seq_len
+)
 
 @app.route("/hello")
 def hello():
@@ -94,7 +140,7 @@ def get_classify_and_attn():
         # Get model outputs and attention matrix
         output, atten = attention.attention_utils.sent_pred(text, model, vocab_dict, 
                                 tokenizer, max_length, device, batch_size)
-        # Sum over attention vectorto get single value for each token
+        # Sum over attention vector to get single value for each token
         token_attentions = atten[0].sum(axis=0).cpu().detach().tolist()[:len(tokens)]
         # Get model's class prediction
         preds = output.argmax(axis=1)
@@ -122,7 +168,7 @@ def get_classify_and_attn():
         for token in [t.text for t in doc]:
             occ = text[sentence_seen:].find(token)
             start = occ + sentence_seen
-            end = sentence_seen + occ + len(token)
+            end = start + len(token)
             sentence_seen = sentence_seen + len(token) + occ
             tokens.append({'text' : token, 'start' : start, 'end' : end})
 
@@ -137,8 +183,47 @@ def get_classify_and_attn():
         response['class id'] = int(pred)
         response['class'] = class_labels_dict[pred]	
         response['scores'] = f"Class Scores: {class_labels_dict[0]} : {scores[0]*100:.2f}%, {class_labels_dict[1]} : {scores[1]*100:.2f}%"
-        print(response)
+        print(f"Heatmap RES\n{response}")
         return json.dumps(response), 201
   
+
+@app.route('/joint_classification', methods = ['GET'])
+def get_joint_classify_and_salience():
+    '''
+    Inputs:
+    Input is assumed to be json of the form 
+      {text: "some text"}.
+  
+      Results:
+      Run ML classification model on text. 
+      
+      Returns:
+    classification and attention weights
+      '''
+    # Get text input from request
+    text = request.args.get('text', type = str)
+    text = text.strip()
+    
+    doc = nlp(text)
+    tokens = []
+    sentence_seen = 0
+
+    for token in [t.text for t in doc]:
+        occ = text[sentence_seen:].find(token)
+        start = occ + sentence_seen
+        end = start + len(token)
+        sentence_seen = sentence_seen + len(token) + occ
+        tokens.append({'text' : token, 'start' : start, 'end' : end})
+    
+    joint_tokens = tokenizer_joint.convert_ids_to_tokens(tokenizer_joint.encode(text))[1:-1]
+    joint_token_mask = [i for i,b in enumerate(joint_tokens) if '##' not in b]
+    
+    res = trainer_joint.predict_for_sentence(text, tokenizer_joint, salience=True)
+    res['tokens'] = tokens
+    print(f"JointClassify RES\n{res}")
+    return res, 200
+
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True)
