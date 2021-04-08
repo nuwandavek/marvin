@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple, Optional, DefaultDict, Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch import cuda, nn, save, unsqueeze, sigmoid, stack, sum
+from torch import cuda, nn, save, unsqueeze, sigmoid, stack, sum, no_grad
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
 from tqdm.notebook import tqdm, trange
 import os
@@ -159,26 +159,27 @@ class ParaphraserTrainer(object):
         predicted = []
         labels = []
         epoch_iterator = tqdm(dev_dataloader, desc="Iteration")
-        for step, batch in enumerate(epoch_iterator):
-            batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
-            inputs = self.load_inputs_from_batch(batch)
-            outputs = self.model(**inputs)
-            if self.model_args.data_parallel:
-                generated_outputs = self.model.module.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
-            else:
-                generated_outputs = self.model.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
-            predicted += self.tokenizer.batch_decode(generated_outputs.detach().cpu().numpy(), skip_special_tokens=True)
-            labels += self.tokenizer.batch_decode(inputs['labels'].detach().cpu().numpy(), skip_special_tokens=True)
-            loss = outputs.loss
-            if self.model_args.data_parallel:
-                loss = sum(loss)
-            e_loss += loss.item()
-            epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
-                    step,
-                    global_step,
-                    e_loss / (global_step+1)
-                ))
-            global_step += 1
+        with no_grad():
+            for step, batch in enumerate(epoch_iterator):
+                batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
+                inputs = self.load_inputs_from_batch(batch)
+                outputs = self.model(**inputs)
+                if self.model_args.data_parallel:
+                    generated_outputs = self.model.module.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+                else:
+                    generated_outputs = self.model.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+                predicted += self.tokenizer.batch_decode(generated_outputs.detach().cpu().numpy(), skip_special_tokens=True)
+                labels += self.tokenizer.batch_decode(inputs['labels'].detach().cpu().numpy(), skip_special_tokens=True)
+                loss = outputs.loss
+                if self.model_args.data_parallel:
+                    loss = sum(loss)
+                e_loss += loss.item()
+                epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
+                        step,
+                        global_step,
+                        e_loss / (global_step+1)
+                    ))
+                global_step += 1
 
         results = self.compute_stats(predicted, labels)
         results['dev_loss'] = e_loss / global_step

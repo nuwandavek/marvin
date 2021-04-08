@@ -21,7 +21,7 @@ def load_dataset(data_dir, tokenizer, model_name, tasks, mode, n_proc = 16):
         filename = os.path.join(data_dir, task, config['input_files'][mode])
         data = pd.read_csv(filename, header=None)
         task_labels = []
-        chunk_size = len(data)//n_proc
+        chunk_size = len(data)//n_proc + 1
         for chunk in tqdm(np.array_split(data, chunk_size)):
         # for r, row in tqdm(data.iterrows()):
         #     sentence, label = row

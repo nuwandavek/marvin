@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple, Optional, DefaultDict, Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch import cuda, nn, save, unsqueeze, sigmoid, stack
+from torch import cuda, nn, save, unsqueeze, sigmoid, stack, no_grad
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
 from tqdm.notebook import tqdm, trange
 import os
@@ -30,6 +30,7 @@ class JointTrainer(object):
         self.model.to(self.device)
         self.tasks = self.data_args.task.split('+')
         self.idx_to_classes = idx_to_classes
+        self.label_dims = label_dims = {task : 1 if len(list(idx_to_classes[task].keys())) == 2 else len(list(idx_to_classes[task].keys())) for task in idx_to_classes}
         
 
 
@@ -77,7 +78,7 @@ class JointTrainer(object):
         dev_f1_history, dev_step_history = [], []
         
         
-        self.model.zero_grad()
+        optimizer.zero_grad()
 
         train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch")
 
@@ -115,7 +116,7 @@ class JointTrainer(object):
 
                     optimizer.step()
                     scheduler.step()  # Update learning rate schedule
-                    self.model.zero_grad()
+                    optimizer.zero_grad()
                     global_step += 1
 
                     if self.args.logging_steps > 0 and global_step % self.args.logging_steps == 0:
@@ -165,29 +166,30 @@ class JointTrainer(object):
 
         global_step = 0
         e_loss = 0.0
-        
-        self.model.eval()
-
         epoch_iterator = tqdm(dev_dataloader, desc="Iteration")
         all_labels_dict = {task:np.array([]) for task in self.tasks}
         all_preds_dict = {task:np.array([]) for task in self.tasks}
-        for step, batch in enumerate(epoch_iterator):
-            batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
-            inputs = self.load_inputs_from_batch(batch)
-            loss_dict, logits_dict, labels_dict = self.model(**inputs)
-            loss = 0
-            for task in self.tasks:
-                if task in logits_dict:
-                    all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
-                    all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
-                    loss += loss_dict[task]
-            e_loss += loss.item()
-            epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
-                    step,
-                    global_step,
-                    e_loss / (global_step+1)
-                ))
-            global_step += 1
+        with no_grad(): 
+            for step, batch in enumerate(epoch_iterator):
+                batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
+                inputs = self.load_inputs_from_batch(batch)
+                loss_dict, logits_dict, labels_dict = self.model(**inputs)
+                loss = 0
+                for task in self.tasks:
+                    if task in logits_dict:
+                        if self.label_dims[task]==1:
+                            all_preds_dict[task] = np.append(all_preds_dict[task], (sigmoid(logits_dict[task])>0.5).float().squeeze().detach().cpu().numpy(), axis = 0)
+                        else:
+                            all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
+                        all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
+                        loss += loss_dict[task]
+                e_loss += loss.item()
+                epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
+                        step,
+                        global_step,
+                        e_loss / (global_step+1)
+                    ))
+                global_step += 1
 
         results = self.compute_stats(all_preds_dict, all_labels_dict)
         results['dev_loss'] = e_loss / global_step
@@ -264,22 +266,17 @@ class JointTrainer(object):
         predictions = {}
         if salience:
             for task in self.tasks:
-                preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
-                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": str(np.max(preds)), 'salience' : {}}
-                class_score_0, class_score_1 = logits_dict[task][0]
+                preds = int((sigmoid(logits_dict[task])>0.5).float().squeeze().detach().cpu().numpy())
+                predictions[task] = {"class" : self.idx_to_classes[task][str(preds)], "prob": str(sigmoid(logits_dict[task]).squeeze().detach().cpu().numpy()), 'salience' : {}}
+                class_score = logits_dict[task][0]
                 self.model.zero_grad()
-                class_score_0.backward(retain_graph=True)
+                class_score.backward(retain_graph=True)
                 grads = [h_state.grad for h_state in hidden_states]
                 temp = list(stack(grads).abs().max(axis=0)[0].squeeze().norm(dim=1).detach().cpu().numpy())
-                predictions[task]['salience'][self.idx_to_classes[task]["0"]] = [str(x) for x in temp if x!=0]
-                self.model.zero_grad()
-                class_score_1.backward(retain_graph=True)
-                grads = [h_state.grad for h_state in hidden_states]
-                temp = list(stack(grads).abs().max(axis=0)[0].squeeze().norm(dim=1).detach().cpu().numpy())
-                predictions[task]['salience'][self.idx_to_classes[task]["1"]] = [str(x) for x in temp if x!=0]
+                predictions[task]['salience'] = [str(x) for x in temp if x!=0]
             return predictions
         else:
             for task in self.tasks:
-                preds = sigmoid(logits_dict[task]).detach().cpu().numpy().squeeze()
-                predictions[task] = {"class" : self.idx_to_classes[task][str(np.argmax(preds))], "prob": str(np.max(preds))}
+                preds = int((logits_dict[task]>0.5).float().squeeze().detach().cpu().numpy())
+                predictions[task] = {"class" : self.idx_to_classes[task][str(preds)], "prob": str(sigmoid(logits_dict[task].squeeze()).detach().cpu().numpy())}
             return predictions
