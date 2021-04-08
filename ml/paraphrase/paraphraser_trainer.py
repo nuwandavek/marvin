@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Tuple, Optional, DefaultDict, Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch import cuda, nn, save, unsqueeze, sigmoid, stack
+from torch import cuda, nn, save, unsqueeze, sigmoid, stack, sum
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
 from tqdm.notebook import tqdm, trange
 import os
@@ -24,7 +24,10 @@ class ParaphraserTrainer(object):
         self.args, self.model_args, self.data_args = args
         self.train_dataset = train_dataset
         self.dev_dataset = dev_dataset
-        self.model = model
+        if self.model_args.data_parallel:
+            self.model = nn.DataParallel(model)
+        else:
+            self.model = model
         # GPU or CPU
         self.device = ("cuda" if cuda.is_available() and not self.args.no_cuda else "cpu")
         self.model.to(self.device)
@@ -50,7 +53,7 @@ class ParaphraserTrainer(object):
 
         # Train!
         logger.info("***** Running training *****")
-        logger.info(f"Num examples = {self.train_dataset}")
+        logger.info(f"Num examples = {len(self.train_dataset)}")
         logger.info(f"Num Epochs = {self.args.num_train_epochs}")
         logger.info(f"Total train batch size = {self.args.train_batch_size}")
         logger.info(f"Gradient Accumulation steps = {self.args.gradient_accumulation_steps}")
@@ -79,9 +82,11 @@ class ParaphraserTrainer(object):
                 inputs = self.load_inputs_from_batch(batch)
                 outputs = self.model(**inputs)
                 loss = outputs.loss
-                
+
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
+                if self.model_args.data_parallel:
+                    loss = sum(loss)
                 loss.backward()
 
                 
@@ -130,7 +135,7 @@ class ParaphraserTrainer(object):
                         result_to_save['best_global_step'] = best_model_step
                         result_to_save['best_global_epoch'] = best_model_epoch
                         # save log
-                        filename = f'logs/logs_train_joint_{self.model_args.model_nick}_{self.data_args.task}.jsonl'
+                        filename = f'logs/logs_train_{self.model_args.model_nick}.jsonl'
                         if not os.path.exists(os.path.dirname(filename)):
                             os.makedirs(os.path.dirname(filename))
                         with open(filename,'a') as f:
@@ -144,7 +149,7 @@ class ParaphraserTrainer(object):
 
         # Eval!
         logger.info("***** Running Evaluation *****")
-        logger.info(f"Num examples = {self.dev_dataset}")
+        logger.info(f"Num examples = {len(self.dev_dataset)}")
         logger.info(f"Total eval batch size = {self.args.eval_batch_size}")
 
         global_step = 0
@@ -158,10 +163,15 @@ class ParaphraserTrainer(object):
             batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
             inputs = self.load_inputs_from_batch(batch)
             outputs = self.model(**inputs)
-            generated_outputs = self.model.generate(inputs['input_ids'], inputs['attention_mask'])
-            predicted += self.tokenizer.batch_decode(generated_outputs.detach().cpu.numpy(), skip_special_tokens=True)
-            labels += self.tokenizer.batch_decode(inputs['labels'].detach().cpu.numpy(), skip_special_tokens=True)
+            if self.model_args.data_parallel:
+                generated_outputs = self.model.module.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+            else:
+                generated_outputs = self.model.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+            predicted += self.tokenizer.batch_decode(generated_outputs.detach().cpu().numpy(), skip_special_tokens=True)
+            labels += self.tokenizer.batch_decode(inputs['labels'].detach().cpu().numpy(), skip_special_tokens=True)
             loss = outputs.loss
+            if self.model_args.data_parallel:
+                loss = sum(loss)
             e_loss += loss.item()
             epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
                     step,

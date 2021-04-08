@@ -61,7 +61,7 @@ class JointTrainer(object):
 
         # Train!
         logger.info("***** Running training *****")
-        logger.info(f"Num examples = {self.train_dataset}")
+        logger.info(f"Num examples = {len(self.train_dataset)}")
         logger.info(f"Num Epochs = {self.args.num_train_epochs}")
         logger.info(f"Total train batch size = {self.args.train_batch_size}")
         logger.info(f"Gradient Accumulation steps = {self.args.gradient_accumulation_steps}")
@@ -160,7 +160,7 @@ class JointTrainer(object):
 
         # Eval!
         logger.info("***** Running Evaluation *****")
-        logger.info(f"Num examples = {self.dev_dataset}")
+        logger.info(f"Num examples = {len(self.dev_dataset)}")
         logger.info(f"Total eval batch size = {self.args.eval_batch_size}")
 
         global_step = 0

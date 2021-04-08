@@ -31,6 +31,9 @@ class ModelArguments:
     cache_dir: Optional[str] = field(
         default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3"}
     )
+    data_parallel: Optional[bool] = field(
+        default=False, metadata={"help": "Use multi GPUs, by training parallelly on multiple GPUs and combining the losses (data-parallel)"}
+    )
 
 @dataclass
 class TrainingArguments(TrainingArguments):
