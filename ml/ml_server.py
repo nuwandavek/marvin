@@ -165,23 +165,36 @@ def get_classify_and_attn():
         tokens = []
         sentence_seen = 0
 
-        for token in [t.text for t in doc]:
+        for token in [t.text for t in doc]:    
             occ = text[sentence_seen:].find(token)
-            start = occ + sentence_seen
-            end = start + len(token)
-            sentence_seen = sentence_seen + len(token) + occ
-            tokens.append({'text' : token, 'start' : start, 'end' : end})
+            # Handle the case where the first character in the tokenm is an apostrophe, since BERT tokenizers 
+            # from HuggingFace create a separate apostrophe token but SpaCy does not
+            if token[0] != '\'':
+                start = occ + sentence_seen
+                end = start + len(token)
+                sentence_seen = sentence_seen + len(token) + occ
+                tokens.append({'text' : token, 'start' : start, 'end' : end})
+            else:
+                start_apos = occ + sentence_seen
+                start_rest = start_apos + 1
+                end_apos = start_apos + 1
+                end_rest = start_rest + (len(token) - 1)
+                sentence_seen = sentence_seen + len(token) + occ
+                tokens.append({'text' : token[0], 'start' : start_apos, 'end' : end_apos})
+                tokens.append({'text' : token[1:], 'start' : start_rest, 'end' : end_rest})
 
         bert_tokens = tokenizer.convert_ids_to_tokens(tokenizer.encode(text))[1:-1]
         bert_token_mask = [i for i,b in enumerate(bert_tokens) if '##' not in b]
         
+        print(f'bert tokens {bert_tokens}')
+        
         pred, scores, attns = bert.bert_utils.sent_pred(text, model, tokenizer, device, batch_size)
-        pred, scores, tokens = bert.bert_utils.process_outputs(pred, scores, attns, bert_token_mask, tokens)	
+        pred, scores, tokens = bert.bert_utils.process_outputs(pred, scores, attns, bert_token_mask, tokens)    
         response = {}
         response['text'] = text
         response['tokens'] = tokens
         response['class id'] = int(pred)
-        response['class'] = class_labels_dict[pred]	
+        response['class'] = class_labels_dict[pred]    
         response['scores'] = f"Class Scores: {class_labels_dict[0]} : {scores[0]*100:.2f}%, {class_labels_dict[1]} : {scores[1]*100:.2f}%"
         print(f"Heatmap RES\n{response}")
         return json.dumps(response), 201
