@@ -5,7 +5,7 @@ import requests
 from tables import db, app
 from tables import User, Doc, Style, Saliency
 from flask_bcrypt import Bcrypt
-import sys
+import sys,json
 
 
 CORS(app)
@@ -94,6 +94,13 @@ def new_doc():
     content=data['content']
     username=data['username']
     user = User.query.filter_by(username=str(username)).first()
+
+    #Check if this title already exists for this user
+    for doc in user.documents:
+        if(doc.title == title):
+            response = {"error":"This title already exists"}
+            return json.dumps(response), 404
+
     new_doc = Doc(title=title, content=content, user_id = user.id)
     db.session.add(new_doc)
     db.session.commit()
@@ -122,7 +129,7 @@ def getDocContent(docid):
 
 #Update doc content for a user
 @app.route("/doc_content/<docid>", methods=['POST'])
-def upDateDoc(docid):
+def updateDoc(docid):
     req_doc = Doc.query.get_or_404(int(docid))
     data = request.get_json() #SAMPLE:{"title":"sample", "content":"sample"}
     title=data['title']
