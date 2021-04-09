@@ -139,6 +139,16 @@ def updateDoc(docid):
     db.session.commit()
     response = {"Success": "Document updated successfully"}
     return json.dumps(response), 200
+
+#Delete doc 
+@app.route("/doc/<docid>", methods=['DELETE'])
+def deleteDoc(docid):
+    req_doc = Doc.query.get_or_404(int(docid))
+    db.session.delete(req_doc)
+    db.session.commit()
+    response = {"Success":"Document deleted successfully"}
+    return json.dumps(response), 200
+
   
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
