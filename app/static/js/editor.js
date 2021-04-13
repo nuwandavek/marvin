@@ -1,5 +1,7 @@
 var result = null;
 
+var dropdownSelection = null;
+
 function storeResult(data) {
     result = data;
 }
@@ -35,25 +37,11 @@ function RGBAToHexA(r, g, b, a) {
 }
 
 function setSliders(data) {
-    let formalProb = 0;
-    let humorProb = 0;
-    if (data.formality.class === 'formal') {
-        formalProb = data.formality.prob;
-    }
-    else if (data.formality.class === 'informal') {
-        formalProb = 1 - data.formality.prob
-    }
-    if (data.jokes.class === 'joke') {
-        humorProb = data.jokes.prob;
-    }
-    else if (data.jokes.class === 'nojoke') {
-        humorProb = 1 - data.jokes.prob
-    }
-    $('#formality-slider').slider('set value', formalProb * 100);
-    $('#humor-slider').slider('set value', humorProb * 100);
+    $('#formality-slider').slider('set value', data.formality.prob * 100);
+    $('#humor-slider').slider('set value', data.jokes.prob * 100);
 
-    $('#formality-value').html((formalProb * 100).toFixed(2));
-    $('#humor-value').html((humorProb * 100).toFixed(2));
+    $('#formality-value').html((data.formality.prob * 100).toFixed(2));
+    $('#humor-value').html((data.jokes.prob * 100).toFixed(2));
 }
 
 function displayHeatmap(data) {
@@ -69,77 +57,35 @@ function displayHeatmap(data) {
     $('#preview').html(output_txt);
 }
 
+function displayJointHeatmap(data) {
+    output_txt = ''
+    recent_end = 0
+    let query = null;
+    if (dropdownSelection === 'formality') {
+        query = 'formality'
+    }
+    else if (dropdownSelection === 'humor') {
+        query = 'jokes'
+    }
 
-function displayFormalSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.formality.class
-	class_label = 'formal';
-	for (let i = 0; i < data.tokens.length; i++) {
+    if (query != null) {
+        for (let i = 0; i < data.tokens.length; i++) {
             let currToken = data.tokens[i]
             if (recent_end != currToken.start) {
-		output_txt += " ";
+                output_txt += " ";
+                recent_end += 1;
             }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
+            output_txt += "<span style='background : " + RGBAToHexA(255, 0, 0, data[query]['salience'][i] / 2) + "'>" + currToken.text + "</span>"
+            recent_end += currToken.text.length
+        }
+        $('#preview').html(output_txt);
     }
+    else {
+        $('#preview').html(data.input);
+    }
+
 }
 
-
-function displayHumorSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.jokes.class
-	class_label = 'joke';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
-
-
-function displayInformalSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.formality.class
-	class_label = 'informal';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
-
-
-function displayNonHumorSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.jokes.class
-	class_label = 'nojoke';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
 
 $('#analyze').click(() => {
     let txt = quillEditor.getContents().ops[0].insert;
@@ -149,29 +95,15 @@ $('#analyze').click(() => {
         dataType: 'json',
         data: { text: txt },
         success: (d) => {
-	    storeResult(d);
-            displayHeatmap(d.attn);
+            storeResult(d);
+            // displayHeatmap(d.attn);
             setSliders(d.joint);
+            displayJointHeatmap(d.joint);
+
         }
     });
 })
 
-
-$('#formal-salience').click(() => {
-    displayFormalSalienceHeatmap(result.joint);
-})
-
-$('#humor-salience').click(() => {
-    displayHumorSalienceHeatmap(result.joint);
-})
-
-$('#informal-salience').click(() => {
-    displayInformalSalienceHeatmap(result.joint);
-})
-
-$('#non-humor-salience').click(() => {
-    displayNonHumorSalienceHeatmap(result.joint);
-})
 
 
 $('#formality-slider').slider({
@@ -187,3 +119,12 @@ $('#humor-slider').slider({
     start: 0,
     step: 1
 });
+
+$('.dropdown')
+    .dropdown({
+        onChange: function (value, text, $selectedItem) {
+            console.log(value);
+            dropdownSelection = value;
+        }
+    })
+    ;

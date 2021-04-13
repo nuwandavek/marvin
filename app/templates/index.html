@@ -33,11 +33,22 @@
                         <div class="ui teal slider" id="formality-slider"></div>
                         <p>Humor : <span id="humor-value">0</span></p>
                         <div class="ui blue slider" id="humor-slider"></div>
-                        <button class="ui primary button" id="analyze">Analyze</button>
-                        <button class="ui primary button" id="formal-salience">Get Formal Feature Importance</button>
-                        <button class="ui primary button" id="humor-salience">Get Humor Importance</button>
-                        <button class="ui primary button" id="informal-salience">Get Informal Feature Importance</button>
-                        <button class="ui primary button" id="non-humor-salience">Get Non-Humor Importance</button>
+                        <div class="row center-xs">
+                            <div class="ui fluid search selection dropdown col-xs-6">
+                                <input type="hidden" name="saliency">
+                                <div class="default text">Select Text Importance to Visualize</div>
+                                <i class="dropdown icon"></i>
+                                <div class="menu">
+                                    <div class="item" data-value="formality">Formality Text
+                                        Importance</div>
+                                    <div class="item" data-value="humor">Humor Text
+                                        Importance
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="ui primary button col-xs-3" id="analyze">Analyze</button>
+
+                        </div>
 
                     </div>
                 </div>
