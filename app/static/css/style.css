@@ -7,10 +7,24 @@
 #preview-container{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    /* justify-content: space-around; */
     align-items: center;
 }
 
+#editor-container{
+    border: 1px solid #ccc;
+    padding: 0px;
+    border-radius: 5px;
+}
+
+#editor{
+    border: none;
+}
+
+.ql-toolbar.ql-snow{
+    border: none !important;
+    border-bottom: 1px solid #ccc !important;
+}
 
 .button-actions{
     display:inline-block;
@@ -43,16 +57,73 @@
     min-height: 100vh;
 }
 
-#sliders{
-    width: 100%;
-    text-align: center;
-}
-#sliders>p{
-    margin-bottom: 0px;
-    margin-top: 20px;
-}
-
-#preview{
+/* #preview{
     text-align: left;
     width: 100%;
+} */
+
+.side-section{
+    width: 100%;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 5px;
+}
+
+.progress{
+    margin: 20px 0px 40px 0px !important;
+}
+.slider{
+    margin: 15px 0px 15pxpx 0px !important;
+}
+
+.side-section-header{
+    font-weight: 800;
+    letter-spacing: 10px;
+    text-transform: uppercase;
+}
+
+.button{
+    margin-top: 10px !important;
+}
+
+.label-text{
+    /* width: 100%; */
+    font-size: 1em;
+    /* top: 100%; */
+    right: auto;
+    left: 0;
+    bottom: auto;
+    color: rgba(0,0,0,.87);
+    font-weight: 700;
+    text-shadow: none;
+    margin-top: .2em;
+    text-align: center;
+    -webkit-transition: color .4s ease;
+    transition: color .4s ease;
+}
+
+.original{
+    font-size: 20px;
+    margin: 30px;
+}
+
+.suggestion{
+    font-size: 15px;
+    margin: 30px;
+}
+
+.modal-text{
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+}
+
+.suggestion-item:hover{
+    background: #eee;
+    cursor: pointer;
+}
+
+.suggestion-item>*{
+    pointer-events: none;
 }

@@ -1,8 +1,7 @@
-var result = null;
+import { displayHeatmap, displayJointHeatmap, setProgress, setSliders, displayModal } from "./display.js";
 
-function storeResult(data) {
-    result = data;
-}
+var dropdownSelection = 'formality';
+var editorText = '';
 
 var quillEditor = new Quill('#editor', {
     modules: {
@@ -16,174 +15,106 @@ var quillEditor = new Quill('#editor', {
     theme: 'snow'
 });
 
-function RGBAToHexA(r, g, b, a) {
-    r = r.toString(16);
-    g = g.toString(16);
-    b = b.toString(16);
-    a = Math.round(a * 255).toString(16);
 
-    if (r.length == 1)
-        r = "0" + r;
-    if (g.length == 1)
-        g = "0" + g;
-    if (b.length == 1)
-        b = "0" + b;
-    if (a.length == 1)
-        a = "0" + a;
-
-    return "#" + r + g + b + a;
-}
-
-function setSliders(data) {
-    let formalProb = 0;
-    let humorProb = 0;
-    if (data.formality.class === 'formal') {
-        formalProb = data.formality.prob;
-    }
-    else if (data.formality.class === 'informal') {
-        formalProb = 1 - data.formality.prob
-    }
-    if (data.jokes.class === 'joke') {
-        humorProb = data.jokes.prob;
-    }
-    else if (data.jokes.class === 'nojoke') {
-        humorProb = 1 - data.jokes.prob
-    }
-    $('#formality-slider').slider('set value', formalProb * 100);
-    $('#humor-slider').slider('set value', humorProb * 100);
-
-    $('#formality-value').html((formalProb * 100).toFixed(2));
-    $('#humor-value').html((humorProb * 100).toFixed(2));
-}
-
-function displayHeatmap(data) {
-    output_txt = ''
-    recent_end = 0
-    for (let i = 0; i < data.tokens.length; i++) {
-        let currToken = data.tokens[i]
-        if (recent_end != currToken.start) {
-            output_txt += " ";
-        }
-        output_txt += "<span style='background : " + RGBAToHexA(255, 0, 0, currToken.attention / 20) + "'>" + currToken.text + "</span>"
-    }
-    $('#preview').html(output_txt);
-}
-
-
-function displayFormalSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.formality.class
-	class_label = 'formal';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
-
-
-function displayHumorSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.jokes.class
-	class_label = 'joke';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
-
-
-function displayInformalSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.formality.class
-	class_label = 'informal';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 255, 0, data.formality.salience[class_label][i+1]*10) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
-
-
-function displayNonHumorSalienceHeatmap(data) {
-    if (data != null) {
-	output_txt = ''
-	recent_end = 0
-	// class_label = data.jokes.class
-	class_label = 'nojoke';
-	for (let i = 0; i < data.tokens.length; i++) {
-            let currToken = data.tokens[i]
-            if (recent_end != currToken.start) {
-		output_txt += " ";
-            }
-            output_txt += "<span style='background : " + RGBAToHexA(0, 0, 255, data.jokes.salience[class_label][i+1]) + "'>" + currToken.text + "</span>"
-	}
-	$('#preview').html(output_txt);
-    }
-}
+quillEditor.on('text-change', function (delta, oldDelta, source) {
+    editorText = quillEditor.getText();
+});
 
 $('#analyze').click(() => {
-    let txt = quillEditor.getContents().ops[0].insert;
+    let txt = editorText;
     $.ajax({
         url: 'http://0.0.0.0:5000/stats',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt },
         success: (d) => {
-	    storeResult(d);
-            displayHeatmap(d.attn);
+            // displayHeatmap(d.attn);
+            setProgress(d.joint);
             setSliders(d.joint);
+            displayJointHeatmap(d.joint, dropdownSelection, quillEditor);
+
         }
     });
 })
 
 
-$('#formal-salience').click(() => {
-    displayFormalSalienceHeatmap(result.joint);
-})
-
-$('#humor-salience').click(() => {
-    displayHumorSalienceHeatmap(result.joint);
-})
-
-$('#informal-salience').click(() => {
-    displayInformalSalienceHeatmap(result.joint);
-})
-
-$('#non-humor-salience').click(() => {
-    displayNonHumorSalienceHeatmap(result.joint);
-})
-
+const labels = ['Low', 'Mid', 'High']
 
 $('#formality-slider').slider({
     min: 0,
-    max: 100,
+    max: 2,
     start: 0,
-    step: 1
+    step: 1,
+    interpretLabel: function (value) {
+        return labels[value];
+    }
 });
 
 $('#humor-slider').slider({
     min: 0,
-    max: 100,
+    max: 2,
     start: 0,
-    step: 1
+    step: 1,
+    interpretLabel: function (value) {
+        return labels[value];
+    }
 });
+
+$('.dropdown')
+    .dropdown({
+        onChange: function (value, text, $selectedItem) {
+            console.log(value);
+            dropdownSelection = value;
+        },
+        values: [
+            {
+                name: 'Formality',
+                value: 'formality',
+                selected: true
+
+            },
+            {
+                name: 'Humor',
+                value: 'humor',
+            }
+        ]
+    });
+
+
+$('#transfer').click(() => {
+    let txt = editorText;
+    let controls = {
+        formality: $('#formality-slider').slider('get value'),
+        jokes: $('#humor-slider').slider('get value'),
+        suggestions: $('#num-suggestions').val(),
+    }
+    $.ajax({
+        url: 'http://0.0.0.0:5000/transfer',
+        crossDomain: true,
+        dataType: 'json',
+        data: { text: txt, controls: JSON.stringify(controls) },
+        success: (d) => {
+            // console.log(d);
+            displayModal(d);
+            function selectSuggestion() {
+                let k = $(this).data('suggestion-id');
+                // console.log(k, d.suggestions[k]);
+                quillEditor.setContents([{ insert: d.suggestions[k].text }]);
+                $('#transfer-suggestions')
+                    .modal('hide');
+
+            }
+            $('.suggestion-item').click(selectSuggestion);
+            $('#transfer-suggestions')
+                .modal({
+                    onHide: function () {
+                        $('.suggestion-item').unbind('click', selectSuggestion);
+                    }
+                })
+                .modal('show');
+
+
+        }
+    });
+})
+

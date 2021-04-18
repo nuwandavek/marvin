@@ -1,39 +1,37 @@
 from typing import Any, List, Dict, Tuple, Optional, DefaultDict, Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch import cuda, nn, save, unsqueeze, sigmoid, stack, no_grad
+from torch import cuda, nn, save, unsqueeze, sigmoid, stack, sum, no_grad
 from transformers import BertConfig, AdamW, get_linear_schedule_with_warmup, logging
 from tqdm.notebook import tqdm, trange
 import os
 import json
 import numpy as np 
-from sklearn.metrics import f1_score
+from datasets import load_metric
 
 logger = logging.get_logger()
 logger.setLevel(logging.INFO)
 
-class JointTrainer(object):
+class ParaphraserTrainer(object):
     def __init__(
         self,
         args: List[Any],
         model: Any,
+        tokenizer : Any,
         train_dataset: Optional[TensorDataset] = None,
         dev_dataset: Optional[TensorDataset] = None,
-        idx_to_classes: Optional[Dict[str, Any]] = None
     ) -> None:
         self.args, self.model_args, self.data_args = args
         self.train_dataset = train_dataset
         self.dev_dataset = dev_dataset
-        self.model = model
+        if self.model_args.data_parallel:
+            self.model = nn.DataParallel(model)
+        else:
+            self.model = model
         # GPU or CPU
         self.device = ("cuda" if cuda.is_available() and not self.args.no_cuda else "cpu")
         self.model.to(self.device)
-        self.tasks = self.data_args.task.split('+')
-        self.idx_to_classes = idx_to_classes
-        self.label_dims = label_dims = {task : 1 if len(list(idx_to_classes[task].keys())) == 2 else len(list(idx_to_classes[task].keys())) for task in idx_to_classes}
-        
-
-
+        self.tokenizer = tokenizer
         
     def train(self):
         train_sampler = RandomSampler(self.train_dataset)
@@ -43,19 +41,12 @@ class JointTrainer(object):
         writer = SummaryWriter()
 
         # Prepare optimizer and schedule (linear warmup and decay)
-        # no_decay = ['bias', 'LayerNorm.weight']
-        # optimizer_grouped_parameters = [
-        #     {'params': [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
-        #     'weight_decay': self.args.weight_decay},
-        #     {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        # ]
-
-        optimizer_grouped_parameters = []
-        for name, params in self.model.named_parameters():
-            if self.model_args.freeze_encoder:
-                if self.model_args.model_nick in name:
-                    continue
-            optimizer_grouped_parameters.append(params)
+        no_decay = ['bias', 'LayerNorm.weight']
+        optimizer_grouped_parameters = [
+            {'params': [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+            'weight_decay': self.args.weight_decay},
+            {'params': [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        ]
         
         optimizer = AdamW(optimizer_grouped_parameters, lr=self.args.learning_rate, eps=self.args.adam_epsilon)
         scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=self.args.warmup_steps, num_training_steps=t_total)
@@ -75,10 +66,10 @@ class JointTrainer(object):
         best_model_epoch = 0
         best_model_step = 0
         epoch_count = -1
-        dev_f1_history, dev_step_history = [], []
+        dev_score_history, dev_step_history = [], []
         
         
-        optimizer.zero_grad()
+        self.model.zero_grad()
 
         train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch")
 
@@ -90,18 +81,15 @@ class JointTrainer(object):
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
                 inputs = self.load_inputs_from_batch(batch)
                 outputs = self.model(**inputs)
-                loss_dict = outputs[0]
-                loss = 0
-                for task, value in loss_dict.items():
-                    loss += value
+                loss = outputs.loss
 
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
+                if self.model_args.data_parallel:
+                    loss = sum(loss)
                 loss.backward()
 
-                # CHECK batch order and losses
-                # from pdb import set_trace; set_trace()
-
+                
                 tr_loss += loss.item()
                 writer.add_scalar('Train/avg_loss', tr_loss / (global_step+1), global_step)
                 writer.add_scalar('Train/loss', loss, global_step)
@@ -116,7 +104,7 @@ class JointTrainer(object):
 
                     optimizer.step()
                     scheduler.step()  # Update learning rate schedule
-                    optimizer.zero_grad()
+                    self.model.zero_grad()
                     global_step += 1
 
                     if self.args.logging_steps > 0 and global_step % self.args.logging_steps == 0:
@@ -129,25 +117,25 @@ class JointTrainer(object):
                             result_to_save[k] = v
 
                         # save model
-                        dev_f1 =  result_to_save["f1_mean"]
+                        dev_score =  result_to_save["bleu"]
                         dev_loss =  result_to_save["dev_loss"]
-                        writer.add_scalar('Dev/f1', dev_f1, global_step)
+                        writer.add_scalar('Dev/score', dev_score, global_step)
                         writer.add_scalar('Dev/loss', dev_loss, global_step)
-                        if global_step == self.args.logging_steps  or dev_f1 > max(dev_f1_history):
+                        if global_step == self.args.logging_steps  or dev_score > max(dev_score_history):
                             self.save_model()
                             best_model_epoch = epoch_count
                             best_model_step = global_step
-                            logger.info(f"New best model saved at step {global_step}, epoch {epoch_count}: f1 = {dev_f1}")
+                            logger.info(f"New best model saved at step {global_step}, epoch {epoch_count}: score = {dev_score}")
                         else:
                             logger.info(f"Best model still at step {best_model_step}, epoch {best_model_epoch}")
                         
-                        dev_f1_history += [dev_f1]
+                        dev_score_history += [dev_score]
                         dev_step_history += [global_step]
-                        result_to_save['best_f1_mean'] = max(dev_f1_history)
+                        result_to_save['best_score_mean'] = max(dev_score_history)
                         result_to_save['best_global_step'] = best_model_step
                         result_to_save['best_global_epoch'] = best_model_epoch
                         # save log
-                        filename = f'logs/logs_train_joint_{self.model_args.model_nick}_{self.data_args.task}.jsonl'
+                        filename = f'logs/logs_train_{self.model_args.model_nick}.jsonl'
                         if not os.path.exists(os.path.dirname(filename)):
                             os.makedirs(os.path.dirname(filename))
                         with open(filename,'a') as f:
@@ -166,23 +154,25 @@ class JointTrainer(object):
 
         global_step = 0
         e_loss = 0.0
+        
+        self.model.eval()
+        predicted = []
+        labels = []
         epoch_iterator = tqdm(dev_dataloader, desc="Iteration")
-        all_labels_dict = {task:np.array([]) for task in self.tasks}
-        all_preds_dict = {task:np.array([]) for task in self.tasks}
-        with no_grad(): 
+        with no_grad():
             for step, batch in enumerate(epoch_iterator):
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
                 inputs = self.load_inputs_from_batch(batch)
-                loss_dict, logits_dict, labels_dict = self.model(**inputs)
-                loss = 0
-                for task in self.tasks:
-                    if task in logits_dict:
-                        if self.label_dims[task]==1:
-                            all_preds_dict[task] = np.append(all_preds_dict[task], (sigmoid(logits_dict[task])>0.5).float().squeeze().detach().cpu().numpy(), axis = 0)
-                        else:
-                            all_preds_dict[task] = np.append(all_preds_dict[task], logits_dict[task].argmax(axis=1).detach().cpu().numpy(), axis = 0)
-                        all_labels_dict[task] = np.append(all_labels_dict[task], labels_dict[task].detach().cpu().numpy(), axis=0)
-                        loss += loss_dict[task]
+                outputs = self.model(**inputs)
+                if self.model_args.data_parallel:
+                    generated_outputs = self.model.module.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+                else:
+                    generated_outputs = self.model.generate(input_ids = inputs['input_ids'], attention_mask = inputs['attention_mask'])
+                predicted += self.tokenizer.batch_decode(generated_outputs.detach().cpu().numpy(), skip_special_tokens=True)
+                labels += self.tokenizer.batch_decode(inputs['labels'].detach().cpu().numpy(), skip_special_tokens=True)
+                loss = outputs.loss
+                if self.model_args.data_parallel:
+                    loss = sum(loss)
                 e_loss += loss.item()
                 epoch_iterator.set_description("step {}/{} loss={:.2f}".format(
                         step,
@@ -191,19 +181,26 @@ class JointTrainer(object):
                     ))
                 global_step += 1
 
-        results = self.compute_stats(all_preds_dict, all_labels_dict)
+        results = self.compute_stats(predicted, labels)
         results['dev_loss'] = e_loss / global_step
         return results
 
-    def compute_stats(self, preds_dict, labels_dict):
-        results = {}
-        f1_mean = 0
-        for task in self.tasks:
-            f1 = f1_score(labels_dict[task], preds_dict[task])
-            results[f'{task}_f1']  =  f1
-            f1_mean += f1
-        results['f1_mean'] = f1_mean / len(self.tasks)
-        return results
+    def postprocess_text(self, preds, labels):
+        preds = [pred.strip() for pred in preds]
+        labels = [[label.strip()] for label in labels]
+
+        return preds, labels
+    
+    def compute_stats(self, preds, labels):
+        metric = load_metric("sacrebleu")
+        preds, labels = self.postprocess_text(preds, labels)
+        result = metric.compute(predictions=preds, references=labels)
+        result = {"bleu": result["score"]}
+
+        prediction_lens = [np.count_nonzero(pred != self.tokenizer.pad_token_id) for pred in preds]
+        result["gen_len"] = np.mean(prediction_lens)
+        result = {k: round(v, 4) for k, v in result.items()}
+        return result
 
     
     def save_model(self):
@@ -224,59 +221,21 @@ class JointTrainer(object):
         # inputs = {'input_ids': batch[0],
                   # 'attention_mask': batch[1],
                   # 'label_ids': batch[3]}
-        label_ids = {}
         
-        # [batch x task]
-        if len(batch[3].shape) == 1:
-            label_ids_tensors = unsqueeze(batch[3],-1)
-        else:
-            label_ids_tensors = batch[3]
         # [batch x length x task]
-        for idx, task in enumerate(self.tasks):
-            label_ids[task] = label_ids_tensors[:,idx]
-            
         inputs = {'input_ids': batch[0],
                   'attention_mask': batch[1],
-                  'labels_all' : label_ids,
-                  'task_ids' : batch[4]
-                }
-        if 'distilbert' not in self.model_args.model_name_or_path:
-            inputs['token_type_ids'] = batch[2]
+                  'labels': batch[2],
+               }
         return inputs
 
 
-    def predict_for_sentence(self, sentence, tokenizer, salience=False):
+    def predict_for_sentence(self, sentence):
         self.model.eval()
-        tokenized_sentence = tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
+        tokenized_sentence = self.tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
         input_ids = tokenized_sentence['input_ids'].to(self.device)
         attention_mask = tokenized_sentence['attention_mask'].to(self.device)
-        if 'distilbert' not in self.model_args.model_nick:
-            token_type_ids = tokenized_sentence['token_type_ids'].to(self.device)
-            if salience:
-                logits_dict, hidden_states = self.model.predict(input_ids, attention_mask, token_type_ids, output_hidden_states=True)
-            else:
-                logits_dict = self.model.predict(input_ids, attention_mask, token_type_ids)
-
-        else:
-            if salience:
-                logits_dict, hidden_states = self.model.predict(input_ids, attention_mask, output_hidden_states=True)
-            else:
-                logits_dict = self.model.predict(input_ids, attention_mask)
-
-        predictions = {}
-        if salience:
-            for task in self.tasks:
-                preds = int((sigmoid(logits_dict[task])>0.5).float().squeeze().detach().cpu().numpy())
-                predictions[task] = {"class" : self.idx_to_classes[task][str(preds)], "prob": str(sigmoid(logits_dict[task]).squeeze().detach().cpu().numpy()), 'salience' : {}}
-                class_score = logits_dict[task][0]
-                self.model.zero_grad()
-                class_score.backward(retain_graph=True)
-                grads = [h_state.grad for h_state in hidden_states]
-                temp = list(stack(grads).abs().max(axis=0)[0].squeeze().norm(dim=1).detach().cpu().numpy())
-                predictions[task]['salience'] = [str(x) for x in temp if x!=0][1:-1]
-            return predictions
-        else:
-            for task in self.tasks:
-                preds = int((logits_dict[task]>0.5).float().squeeze().detach().cpu().numpy())
-                predictions[task] = {"class" : self.idx_to_classes[task][str(preds)], "prob": str(sigmoid(logits_dict[task].squeeze()).detach().cpu().numpy())}
-            return predictions
+        prediction = self.model.generate(input_ids, attention_mask)
+        prediction = self.tokenizer.decode(prediction.detach().cpu.numpy()[0], skip_special_tokens=True).strip()
+        return prediction
+        
