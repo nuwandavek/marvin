@@ -49,6 +49,47 @@ def load_dataset_style(data_dir, tokenizer, mode, task, delimiter = "<|endoftext
     dataset = TensorDataset(all_input_ids, all_attention_mask)
     return dataset
 
-        
 
+def load_dataset_psuedo(data_dir, tokenizer, mode, tasks, n_proc = 16):
+    all_input_ids = None
+    all_attention_mask = None
+    all_output_ids = None
+    for t, task in enumerate(tasks) :
+        filename = os.path.join(data_dir, task, mode,'.csv')    
+        data = pd.read_csv(filename, header=None)
+        chunk_size = len(data)//n_proc + 1
+        for chunk in tqdm(np.array_split(data, chunk_size)):
+            temp = 'transfer: ' + chunk[0] + ' | input formality: '+chunk[1] + ' | output formality: '+chunk[3]
+            tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
+            output = tokenizer(list(chunk[2]), padding='max_length', return_tensors='pt', truncation = True)
+            if all_input_ids is None:
+                all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
+                all_output_ids = output['input_ids']
+            else:
+                all_input_ids = torch.cat((all_input_ids, tokenized['input_ids']),0)
+                all_output_ids = torch.cat((all_output_ids, output['input_ids']),0)
+                all_attention_mask = torch.cat((all_attention_mask, tokenized['attention_mask']), 0)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_output_ids)
+    return dataset
 
+def load_dataset_psuedo_diff(data_dir, tokenizer, mode, tasks, n_proc = 16):
+    all_input_ids = None
+    all_attention_mask = None
+    all_output_ids = None
+    for t, task in enumerate(tasks) :
+        filename = os.path.join(data_dir, task, mode,'.csv')    
+        data = pd.read_csv(filename, header=None)
+        chunk_size = len(data)//n_proc + 1
+        for chunk in tqdm(np.array_split(data, chunk_size)):
+            temp = 'transfer: ' + chunk[0] + ' | input to output: '+chunk[2]
+            tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
+            output = tokenizer(list(chunk[1]), padding='max_length', return_tensors='pt', truncation = True)
+            if all_input_ids is None:
+                all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
+                all_output_ids = output['input_ids']
+            else:
+                all_input_ids = torch.cat((all_input_ids, tokenized['input_ids']),0)
+                all_output_ids = torch.cat((all_output_ids, output['input_ids']),0)
+                all_attention_mask = torch.cat((all_attention_mask, tokenized['attention_mask']), 0)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_output_ids)
+    return dataset
