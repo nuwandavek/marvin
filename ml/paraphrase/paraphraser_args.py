@@ -52,6 +52,12 @@ class TrainingArguments(TrainingArguments):
         metadata={
             "help": "Dropout for fully-connected layers"},
     )
+
+    meta_task: Optional[str] = field(
+        default='paraphrase',
+        metadata={
+            "help": "'paraphrase' or 'transfer'"},
+    )
     
 @dataclass
 class DataTrainingArguments:
