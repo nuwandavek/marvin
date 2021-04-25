@@ -1,19 +1,19 @@
 import sys, os
 sys.path.append('../paraphrase/')
 from paraphraser_args import ModelArguments, DataTrainingArguments, TrainingArguments
-from paraphraser_dataloader import load_dataset_pseudo
+from paraphraser_dataloader import load_dataset_pseudo_diff, load_dataset_pseudo
 from paraphraser_trainer import ParaphraserTrainer
 from transformers import AutoTokenizer, AutoModelWithLMHead, HfArgumentParser
 
 data_dir = "../data/pseudo"
-task = "formality"
+task = "formality_diff"
 model_name = "t5-small"
-model_nick = "t5_small"
+model_nick = "t5_transfer_diff"
 output_dir = "../models/"
-epochs = "5"
+epochs = "15"
 train_batch_size = "16"
 eval_batch_size = "16"
-save_log_steps = "800"
+save_log_steps = "1200"
 
 parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
 model_args, data_args, training_args = parser.parse_args_into_dataclasses([
@@ -52,8 +52,8 @@ model_args, data_args, training_args = parser.parse_args_into_dataclasses([
 tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path)
 model = AutoModelWithLMHead.from_pretrained(model_args.model_name_or_path)
 
-train_dataset = load_dataset_pseudo(data_args.data_dir, tokenizer, mode="train", tasks = task.split('+'), n_proc=2048)
-dev_dataset = load_dataset_pseudo(data_args.data_dir, tokenizer, mode="dev",  tasks = task.split('+'), n_proc=2048)
+train_dataset = load_dataset_pseudo_diff(data_args.data_dir, tokenizer, mode="train", tasks = task.split('+'), n_proc=2048)
+dev_dataset = load_dataset_pseudo_diff(data_args.data_dir, tokenizer, mode="dev",  tasks = task.split('+'), n_proc=2048)
 
 
 trainer = ParaphraserTrainer([training_args,model_args, data_args], model, tokenizer, train_dataset, dev_dataset)
