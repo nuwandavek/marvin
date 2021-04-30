@@ -6,14 +6,14 @@ from paraphraser_trainer import ParaphraserTrainer
 from transformers import AutoTokenizer, AutoModelWithLMHead, HfArgumentParser
 
 data_dir = "../data/pseudo"
-task = "formality_joint"
+task = "abstract+shakespeare+wiki"
 model_name = "t5-small"
-model_nick = "t5_transfer_formality_joint"
+model_nick = "t5_transfer_macro_binary"
 output_dir = "../models/"
 epochs = "4"
 train_batch_size = "16"
 eval_batch_size = "16"
-save_log_steps = "900"
+save_log_steps = "2500"
 
 parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
 model_args, data_args, training_args = parser.parse_args_into_dataclasses([
@@ -47,7 +47,7 @@ model_args, data_args, training_args = parser.parse_args_into_dataclasses([
     "--meta_task",
     "transfer",
     "--meta_task_type",
-    "joint"
+    "binary"
 ])
 
 
