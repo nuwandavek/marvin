@@ -58,6 +58,11 @@ class TrainingArguments(TrainingArguments):
         metadata={
             "help": "'paraphrase' or 'transfer'"},
     )
+    meta_task_type: Optional[str] = field(
+        default='intra',
+        metadata={
+            "help": "'paraphrase' or 'transfer'"},
+    )
     
 @dataclass
 class DataTrainingArguments:

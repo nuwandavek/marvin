@@ -59,7 +59,7 @@ def load_dataset_pseudo(data_dir, tokenizer, mode, tasks, n_proc = 16):
         data = pd.read_csv(filename, header=None)
         chunk_size = len(data)//n_proc + 1
         for chunk in tqdm(np.array_split(data, chunk_size)):
-            temp = 'transfer: ' + chunk[0] + ' | input formality: '+chunk[1] + ' | output formality: '+chunk[3]+' </s>'
+            temp = 'transfer: ' + chunk[0] + ' | input: '+chunk[1] + ' | output: '+chunk[3]+' </s>'
             tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
             output = tokenizer(list(chunk[2]), padding='max_length', return_tensors='pt', truncation = True)
             if all_input_ids is None:
