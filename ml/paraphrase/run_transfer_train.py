@@ -1,14 +1,14 @@
 import sys, os
 sys.path.append('../paraphrase/')
 from paraphraser_args import ModelArguments, DataTrainingArguments, TrainingArguments
-from paraphraser_dataloader import load_dataset_pseudo_diff, load_dataset_pseudo
+from paraphraser_dataloader import load_dataset_pseudo_diff, load_dataset_pseudo, load_dataset_pseudo_joint, load_dataset_pseudo_binary
 from paraphraser_trainer import ParaphraserTrainer
 from transformers import AutoTokenizer, AutoModelWithLMHead, HfArgumentParser
 
 data_dir = "../data/pseudo"
-task = "formality"
+task = "formality_joint"
 model_name = "t5-small"
-model_nick = "t5_transfer_formality"
+model_nick = "t5_transfer_formality_joint"
 output_dir = "../models/"
 epochs = "4"
 train_batch_size = "16"
@@ -47,7 +47,7 @@ model_args, data_args, training_args = parser.parse_args_into_dataclasses([
     "--meta_task",
     "transfer",
     "--meta_task_type",
-    "intra"
+    "joint"
 ])
 
 
@@ -60,6 +60,13 @@ if training_args.meta_task_type=='intra':
 elif training_args.meta_task_type=='diff':
     train_dataset = load_dataset_pseudo_diff(data_args.data_dir, tokenizer, mode="train", tasks = task.split('+'), n_proc=2048)
     dev_dataset = load_dataset_pseudo_diff(data_args.data_dir, tokenizer, mode="dev",  tasks = task.split('+'), n_proc=2048)
+elif training_args.meta_task_type=='joint':
+    train_dataset = load_dataset_pseudo_joint(data_args.data_dir, tokenizer, mode="train", tasks = task.split('+'), n_proc=2048)
+    dev_dataset = load_dataset_pseudo_joint(data_args.data_dir, tokenizer, mode="dev",  tasks = task.split('+'), n_proc=2048)
+elif training_args.meta_task_type=='binary':
+    train_dataset = load_dataset_pseudo_binary(data_args.data_dir, tokenizer, mode="train", tasks = task.split('+'), n_proc=2048)
+    dev_dataset = load_dataset_pseudo_binary(data_args.data_dir, tokenizer, mode="dev",  tasks = task.split('+'), n_proc=2048)
+
 
 
 
