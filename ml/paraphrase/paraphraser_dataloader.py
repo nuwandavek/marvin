@@ -15,7 +15,7 @@ def load_dataset(data_dir, tokenizer, mode, delimiter = "<|endoftext|>", prefix 
     chunk_size = len(data)//n_proc + 1
     for chunk in tqdm(np.array_split(data, chunk_size)):
         chunk = [x.split(delimiter) for x in chunk]
-        inputs = tokenizer([prefix+x[0]+'</s>' for x in chunk], padding="max_length", return_tensors='pt', truncation = True)
+        inputs = tokenizer([prefix+x[0] for x in chunk], padding="max_length", return_tensors='pt', truncation = True)
         outputs = tokenizer([x[1] for x in chunk], padding="max_length", return_tensors='pt', truncation = True)
         if all_input_ids is None:
             all_input_ids, all_input_attention_mask = inputs['input_ids'], inputs['attention_mask']
@@ -40,7 +40,7 @@ def load_dataset_style(data_dir, tokenizer, mode, task, delimiter = "<|endoftext
     data = pd.read_csv(filename, header=None)
     chunk_size = len(data)//n_proc + 1
     for chunk in tqdm(np.array_split(data, chunk_size)):
-        tokenized = tokenizer([prefix+x+' </s>' for x in list(chunk[0])], padding='max_length', return_tensors='pt', truncation = True)
+        tokenized = tokenizer([prefix+x for x in list(chunk[0])], padding='max_length', return_tensors='pt', truncation = True)
         if all_input_ids is None:
             all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
         else:
@@ -59,7 +59,29 @@ def load_dataset_pseudo(data_dir, tokenizer, mode, tasks, n_proc = 16):
         data = pd.read_csv(filename, header=None)
         chunk_size = len(data)//n_proc + 1
         for chunk in tqdm(np.array_split(data, chunk_size)):
-            temp = 'transfer: ' + chunk[0] + ' | input: '+chunk[1] + ' | output: '+chunk[3]+' </s>'
+            temp = 'transfer: ' + chunk[0] + ' | input: '+chunk[1] + ' | output: '+chunk[3]
+            tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
+            output = tokenizer(list(chunk[2]), padding='max_length', return_tensors='pt', truncation = True)
+            if all_input_ids is None:
+                all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
+                all_output_ids = output['input_ids']
+            else:
+                all_input_ids = torch.cat((all_input_ids, tokenized['input_ids']),0)
+                all_output_ids = torch.cat((all_output_ids, output['input_ids']),0)
+                all_attention_mask = torch.cat((all_attention_mask, tokenized['attention_mask']), 0)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_output_ids)
+    return dataset
+
+def load_dataset_pseudo2(data_dir, tokenizer, mode, tasks, n_proc = 16):
+    all_input_ids = None
+    all_attention_mask = None
+    all_output_ids = None
+    for t, task in enumerate(tasks) :
+        filename = os.path.join(data_dir, task, mode+'.csv')    
+        data = pd.read_csv(filename, header=None)
+        chunk_size = len(data)//n_proc + 1
+        for chunk in tqdm(np.array_split(data, chunk_size)):
+            temp = 'transfer: ' + chunk[0] + ' | input '+task+': '+chunk[1] + ' | output '+task+': '+chunk[3]
             tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
             output = tokenizer(list(chunk[2]), padding='max_length', return_tensors='pt', truncation = True)
             if all_input_ids is None:
@@ -77,11 +99,35 @@ def load_dataset_pseudo_binary(data_dir, tokenizer, mode, tasks, n_proc = 16):
     all_attention_mask = None
     all_output_ids = None
     for t, task in enumerate(tasks) :
+        print(task, mode)
         filename = os.path.join(data_dir, task, mode+'_binary.csv')    
         data = pd.read_csv(filename, header=None)
         chunk_size = len(data)//n_proc + 1
         for chunk in tqdm(np.array_split(data, chunk_size)):
-            temp = 'transfer: ' + chunk[0] + ' | target: '+task + ' </s>'
+            temp = 'transfer: ' + chunk[0] + ' | target: '+task
+            tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
+            output = tokenizer(list(chunk[1]), padding='max_length', return_tensors='pt', truncation = True)
+            if all_input_ids is None:
+                all_input_ids, all_attention_mask = tokenized['input_ids'], tokenized['attention_mask']
+                all_output_ids = output['input_ids']
+            else:
+                all_input_ids = torch.cat((all_input_ids, tokenized['input_ids']),0)
+                all_output_ids = torch.cat((all_output_ids, output['input_ids']),0)
+                all_attention_mask = torch.cat((all_attention_mask, tokenized['attention_mask']), 0)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_output_ids)
+    return dataset
+
+def load_dataset_pseudo_binary_single(data_dir, tokenizer, mode, tasks, n_proc = 16):
+    all_input_ids = None
+    all_attention_mask = None
+    all_output_ids = None
+    for t, task in enumerate(tasks) :
+        print(task, mode)
+        filename = os.path.join(data_dir, task, mode+'_binary.csv')    
+        data = pd.read_csv(filename, header=None)
+        chunk_size = len(data)//n_proc + 1
+        for chunk in tqdm(np.array_split(data, chunk_size)):
+            temp = 'transfer: ' + chunk[0]
             tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
             output = tokenizer(list(chunk[1]), padding='max_length', return_tensors='pt', truncation = True)
             if all_input_ids is None:
@@ -103,7 +149,7 @@ def load_dataset_pseudo_joint(data_dir, tokenizer, mode, tasks, n_proc = 16):
         data = pd.read_csv(filename, header=None)
         chunk_size = len(data)//n_proc + 1
         for chunk in tqdm(np.array_split(data, chunk_size)):
-            temp = 'transfer: ' + chunk[0] + ' | input formality: '+chunk[1] + ' | input emotion: '+chunk[2] +' | output formality: '+chunk[4] +' | output emotion: '+chunk[5] +' </s>'
+            temp = 'transfer: ' + chunk[0] + ' | input formality: '+chunk[1] + ' | input emotion: '+chunk[2] +' | output formality: '+chunk[4] +' | output emotion: '+chunk[5]
             tokenized = tokenizer(list(temp), padding='max_length', return_tensors='pt', truncation = True)
             output = tokenizer(list(chunk[3]), padding='max_length', return_tensors='pt', truncation = True)
             if all_input_ids is None:

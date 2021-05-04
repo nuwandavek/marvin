@@ -1,3 +1,3 @@
 # App
 
-App related `README` file.
+Run the app server with `python server.py`
