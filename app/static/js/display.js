@@ -10,12 +10,12 @@ function setProgress(data) {
             }
         })
         ;
-    $('#humor-progress')
+    $('#emo-progress')
         .progress({
             duration: 200,
             percent: parseInt(data.jokes.prob * 100),
             text: {
-                active: 'Humor : {percent} %'
+                active: 'Emotion : {percent} %'
             }
         })
         ;
@@ -27,14 +27,14 @@ function displayModal(data) {
     let originalText = "<div class='row middle-xs'>" +
         "<p class='modal-text'><span class='ui label'>Original Text</span><span class='original'>" + data.input.text + "</span></p>" +
         "<div class='ui teal image label'>70%<div class='detail'>Formality</div></div>" +
-        "<div class='ui yellow image label'>2%<div class='detail'>Humor</div></div>" +
+        "<div class='ui yellow image label'>2%<div class='detail'>Emotion</div></div>" +
         "</div>";
     let suggestionText = '<h4 class="ui horizontal divider header"><i class="lightbulb icon"></i></h4>';
     for (var i = 0; i < data.suggestions.length; i++) {
         suggestionText += "<div class='row middle-xs suggestion-item' data-suggestion-id='" + i + "'>" +
             "<p class='modal-text'><span class='ui label'>Suggestion " + (i + 1) + "</span><span class='suggestion'>" + data.suggestions[i].text + "</span></p>" +
             "<div class='ui teal image label'>70%<div class='detail'>Formality</div></div>" +
-            "<div class='ui yellow image label'>2%<div class='detail'>Humor</div></div>" +
+            "<div class='ui yellow image label'>2%<div class='detail'>Emotion</div></div>" +
             "</div>";
     }
     modalHTML = originalText + suggestionText;
@@ -44,10 +44,10 @@ function displayModal(data) {
 
 function setSliders(data) {
     // $('#formality-slider').slider('set value', data.formality.probBucket);
-    // $('#humor-slider').slider('set value', data.jokes.probBucket);
+    // $('#emo-slider').slider('set value', data.jokes.probBucket);
 
     $('#formality-slider').slider('set value', 2);
-    $('#humor-slider').slider('set value', 0);
+    $('#emo-slider').slider('set value', 0);
 
 }
 
@@ -71,7 +71,7 @@ function displayHeatmap(data) {
 //     if (dropdownSelection === 'formality') {
 //         query = 'formality'
 //     }
-//     else if (dropdownSelection === 'humor') {
+//     else if (dropdownSelection === 'emo') {
 //         query = 'jokes'
 //     }
 
@@ -100,7 +100,7 @@ function displayJointHeatmap(data, dropdownSelection, quillEditor) {
     if (dropdownSelection === 'formality') {
         query = 'formality'
     }
-    else if (dropdownSelection === 'humor') {
+    else if (dropdownSelection === 'emo') {
         query = 'jokes'
     }
 

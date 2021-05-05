@@ -18,77 +18,214 @@
     <div id="main" class="row center-xs">
         <div id="section_1" class="col-xs-8">
             <!-- <p id="app-title">marvin</p> -->
-            <img class="col-xs-3" src="/res/marvin.jpg">
+            <img class="col-xs-2" src="/res/marvin.jpg">
             <div class="row" id="editor-preview">
                 <div id="editor-container" class="col-xs-8 start-xs  quill-container-body">
-                    <div id="editor" class="quill-body">
+                    <div id="editor" class="quill-body"></div>
+                    <div class="end-xs">
+                        <div class="ui label">
+                            Words
+                            <div class="detail" id="words">0</div>
+                        </div>
                     </div>
+
                 </div>
-                <div id="preview-container" class="col-xs-4 start-xs">
-                    <!-- <div id="preview" class="preview-body">
-                        Click the Analyze button to get started ...
-                    </div> -->
-                    <div id="analysis-section" class="side-section">
-                        <p class="side-section-header">Analysis</p>
-                        <div class="ui divider"></div>
-                        <div id="formality-progress" class="ui tiny teal progress" data-value="0" data-total="100">
-                            <div class="bar"></div>
-                            <div class="label label-text">Formality : 0 %</span></div>
-                        </div>
-                        <div id="humor-progress" class="ui tiny yellow progress" data-value="0" data-total="100">
-                            <div class="bar"></div>
-                            <div class="label label-text">Humor : 0 %</span></div>
-                        </div>
-                        <div class="row center-xs middle-xs">
-                            <p style="margin: 0px;">Display Text Importance </p>
-                            <div class="ui fluid search selection dropdown col-xs-4">
-                                <input type="hidden" name="saliency">
+                <div class="col-xs-4">
+                    <div id="mode-selector" class="start-xs mode-container">
+                        <div id="mode-selector" class="side-section">
+                            <p class="side-section-header">Style Mode</p>
+                            <div class="ui fluid search selection dropdown">
+                                <input type="hidden" name="mode">
                                 <div class="default text">Select Text Importance to Visualize</div>
                                 <i class="dropdown icon"></i>
                                 <div class="menu">
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-----Micro Formality Panels --->
+                    <div id="preview-container-micro-formality" class="start-xs preview-container">
+                        <div id="analysis-section-micro-formality" class="side-section">
+                            <p class="side-section-header">Analysis</p>
+                            <div class="ui divider"></div>
+                            <div id="formality-progress" class="ui tiny teal progress" data-value="0" data-total="100">
+                                <div class="bar"></div>
+                                <div class="label label-text">Formality : 0 %</span></div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <p style="margin: 0px;">Visualize Word Contribution to Style</p>
+                                <div class="small ui buttons">
+                                    <button class="ui button active viz" data-style="none">None</button>
+                                    <button class="ui button viz" data-style="formality">Formality</button>
+                                </div>
+                            </div>
+                            <div class="row around-xs middle-xs">
+                                <button class="ui blue button col-xs-10" id="analyze-micro-formality">Analyze</button>
+                            </div>
 
                         </div>
-                        <div class="row around-xs middle-xs">
-                            <button class="ui blue button col-xs-10" id="analyze">Analyze</button>
+
+                        <div id="transfer-section-micro-formality" class="side-section">
+                            <p class="side-section-header">Style Transfer Controls</p>
+                            <div class="ui divider"></div>
+
+                            <div id="sliders">
+                                <p class="label-text">Formality</p>
+                                <div class="ui teal slider labeled ticked" id="formality-slider-micro-formality"></div>
+                            </div>
+
+                            <div class="row center-xs middle-xs">
+                                <p style="margin:0px">Number of Suggestions</p>
+                                <div class="ui input col-xs-3">
+                                    <input id="num-suggestions-micro-formality" type="text" placeholder="3" value=3>
+                                </div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <button class="ui red button col-xs-10" id="transfer-micro-formality">Transfer</button>
+                            </div>
                         </div>
 
                     </div>
 
-                    <div id="transfer-section" class="side-section">
-                        <p class="side-section-header">Style Transfer Controls</p>
-                        <div class="ui divider"></div>
-
-                        <div id="sliders">
-                            <p class="label-text">Formality</p>
-                            <div class="ui teal slider labeled ticked" id="formality-slider"></div>
-                            <p class="label-text">Humor</p>
-                            <div class="ui yellow slider labeled ticked" id="humor-slider"></div>
-                        </div>
-
-                        <div class="row center-xs middle-xs">
-                            <p style="margin:0px">Number of Suggestions</p>
-                            <div class="ui input col-xs-3">
-                                <input id="num-suggestions" type="text" placeholder="3" value=3>
+                    <!-----Micro Joint Panels --->
+                    <div id="preview-container-micro-joint" class="start-xs preview-container">
+                        <div id="analysis-section-micro-joint" class="side-section">
+                            <p class="side-section-header">Analysis</p>
+                            <div class="ui divider"></div>
+                            <div id="formality-progress" class="ui tiny teal progress" data-value="0" data-total="100">
+                                <div class="bar"></div>
+                                <div class="label label-text">Formality : 0 %</span></div>
                             </div>
-                        </div>
-                        <div class="row center-xs middle-xs">
-                            <button class="ui red button col-xs-10" id="transfer">Transfer</button>
-                        </div>
-                        <div class="ui modal" id="transfer-suggestions">
-                            <i class="close icon"></i>
-                            <div class="header">
-                                Style Transfer Suggestions
+                            <div id="emo-progress" class="ui tiny yellow progress" data-value="0" data-total="100">
+                                <div class="bar"></div>
+                                <div class="label label-text">Emotion : 0 %</span></div>
                             </div>
-                            <div id="transfer-content" class="content">
+                            <div class="row center-xs middle-xs">
+                                <p style="margin: 0px;">Visualize Word Contribution to Style</p>
+                                <div class="small ui buttons">
+                                    <button class="ui button active viz" data-style="none">None</button>
+                                    <button class="ui button viz" data-style="formality">Formality</button>
+                                    <button class="ui button viz" data-style="emo">Emotion</button>
+                                </div>
+
+                            </div>
+                            <div class="row around-xs middle-xs">
+                                <button class="ui blue button col-xs-10" id="analyze-micro-joint">Analyze</button>
                             </div>
 
                         </div>
 
+                        <div id="transfer-section-micro-joint" class="side-section">
+                            <p class="side-section-header">Style Transfer Controls</p>
+                            <div class="ui divider"></div>
+
+                            <div id="sliders">
+                                <p class="label-text">Formality</p>
+                                <div class="ui teal slider labeled ticked" id="formality-slider-micro-joint"></div>
+                                <p class="label-text">Emotion</p>
+                                <div class="ui yellow slider labeled ticked" id="emo-slider-micro-joint"></div>
+                            </div>
+
+                            <div class="row center-xs middle-xs">
+                                <p style="margin:0px">Number of Suggestions</p>
+                                <div class="ui input col-xs-3">
+                                    <input id="num-suggestions-micro-joint" type="text" placeholder="3" value=3>
+                                </div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <button class="ui red button col-xs-10" id="transfer-micro-joint">Transfer</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-----Macro Formality Panels --->
+                    <div id="preview-container-macro-shakespeare" class="start-xs preview-container">
+                        <div id="analysis-section-macro-shakespeare" class="side-section">
+                            <p class="side-section-header">Analysis</p>
+                            <div class="ui divider"></div>
+                            <div id="shakespeare-progress" class="ui tiny violet progress" data-value="0"
+                                data-total="100">
+                                <div class="bar"></div>
+                                <div class="label label-text">Shakespeare : 0 %</span></div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <p style="margin: 0px;">Visualize Word Contribution to Style</p>
+                                <div class="small ui buttons">
+                                    <button class="ui button active viz" data-style="none">None</button>
+                                    <button class="ui button viz" data-style="shakespeare">Shakespeare</button>
+                                </div>
+
+                            </div>
+                            <div class="row around-xs middle-xs">
+                                <button class="ui blue button col-xs-10" id="analyze-macro-shakespeare">Analyze</button>
+                            </div>
+
+                        </div>
+
+                        <div id="transfer-section-macro-shakespeare" class="side-section">
+                            <p class="side-section-header">Style Transfer Controls</p>
+                            <div class="ui divider"></div>
+
+                            <div id="sliders">
+                                <p class="label-text">Shakespeare</p>
+                                <div class="ui violet slider labeled ticked" id="shakespeare-slider-macro-shakespeare">
+                                </div>
+                            </div>
+
+                            <div class="row center-xs middle-xs">
+                                <p style="margin:0px">Number of Suggestions</p>
+                                <div class="ui input col-xs-3">
+                                    <input id="num-suggestions-macro-shakespeare" type="text" placeholder="3" value=3>
+                                </div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <button class="ui red button col-xs-10"
+                                    id="transfer-macro-shakespeare">Transfer</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-----Macro Binary Panels --->
+                    <div id="preview-container-macro-binary" class="start-xs preview-container">
+                        <div id="transfer-section-macro-binary" class="side-section">
+                            <p class="side-section-header">Style Transfer Controls</p>
+                            <div class="ui divider"></div>
+
+                            <div id="sliders">
+                                <p class="label-text">Binary</p>
+                                <div class="ui basic slider labeled ticked" id="binary-slider"></div>
+                            </div>
+
+                            <div class="row center-xs middle-xs">
+                                <p style="margin:0px">Number of Suggestions</p>
+                                <div class="ui input col-xs-3">
+                                    <input id="num-suggestions-macro-binary" type="text" placeholder="3" value=3>
+                                </div>
+                            </div>
+                            <div class="row center-xs middle-xs">
+                                <button class="ui red button col-xs-10" id="transfer-macro-binary">Transfer</button>
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div class="ui modal" id="transfer-suggestions">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        Style Transfer Suggestions
+                    </div>
+                    <div id="transfer-content" class="content">
                     </div>
 
                 </div>
+
 
 
             </div>
