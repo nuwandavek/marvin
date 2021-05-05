@@ -19,6 +19,9 @@
         <div id="section_1" class="col-xs-8">
             <!-- <p id="app-title">marvin</p> -->
             <img class="col-xs-2" src="/res/marvin.jpg">
+            <div class="ui dimmer" id="dimmer-model-swap">
+                <div class="ui text loader">Loading Models...</div>
+            </div>
             <div class="row" id="editor-preview">
                 <div id="editor-container" class="col-xs-8 start-xs  quill-container-body">
                     <div id="editor" class="quill-body"></div>
@@ -49,7 +52,8 @@
                         <div id="analysis-section-micro-formality" class="side-section">
                             <p class="side-section-header">Analysis</p>
                             <div class="ui divider"></div>
-                            <div id="formality-progress" class="ui tiny teal progress" data-value="0" data-total="100">
+                            <div id="formality-progress-micro-formality" class="ui tiny teal progress" data-value="0"
+                                data-total="100">
                                 <div class="bar"></div>
                                 <div class="label label-text">Formality : 0 %</span></div>
                             </div>
@@ -61,7 +65,8 @@
                                 </div>
                             </div>
                             <div class="row around-xs middle-xs">
-                                <button class="ui blue button col-xs-10" id="analyze-micro-formality">Analyze</button>
+                                <button class="ui blue button col-xs-10 analyze"
+                                    id="analyze-micro-formality">Analyze</button>
                             </div>
 
                         </div>
@@ -82,22 +87,23 @@
                                 </div>
                             </div>
                             <div class="row center-xs middle-xs">
-                                <button class="ui red button col-xs-10" id="transfer-micro-formality">Transfer</button>
+                                <button class="ui red button col-xs-10 transfer"
+                                    id="transfer-micro-formality">Transfer</button>
                             </div>
                         </div>
-
                     </div>
-
                     <!-----Micro Joint Panels --->
                     <div id="preview-container-micro-joint" class="start-xs preview-container">
                         <div id="analysis-section-micro-joint" class="side-section">
                             <p class="side-section-header">Analysis</p>
                             <div class="ui divider"></div>
-                            <div id="formality-progress" class="ui tiny teal progress" data-value="0" data-total="100">
+                            <div id="formality-progress-micro-joint" class="ui tiny teal progress" data-value="0"
+                                data-total="100">
                                 <div class="bar"></div>
                                 <div class="label label-text">Formality : 0 %</span></div>
                             </div>
-                            <div id="emo-progress" class="ui tiny yellow progress" data-value="0" data-total="100">
+                            <div id="emo-progress-micro-joint" class="ui tiny yellow progress" data-value="0"
+                                data-total="100">
                                 <div class="bar"></div>
                                 <div class="label label-text">Emotion : 0 %</span></div>
                             </div>
@@ -111,7 +117,8 @@
 
                             </div>
                             <div class="row around-xs middle-xs">
-                                <button class="ui blue button col-xs-10" id="analyze-micro-joint">Analyze</button>
+                                <button class="ui blue button col-xs-10 analyze"
+                                    id="analyze-micro-joint">Analyze</button>
                             </div>
 
                         </div>
@@ -122,7 +129,8 @@
 
                             <div id="sliders">
                                 <p class="label-text">Formality</p>
-                                <div class="ui teal slider labeled ticked" id="formality-slider-micro-joint"></div>
+                                <div class="ui teal slider labeled ticked" id="formality-slider-micro-joint">
+                                </div>
                                 <p class="label-text">Emotion</p>
                                 <div class="ui yellow slider labeled ticked" id="emo-slider-micro-joint"></div>
                             </div>
@@ -134,19 +142,20 @@
                                 </div>
                             </div>
                             <div class="row center-xs middle-xs">
-                                <button class="ui red button col-xs-10" id="transfer-micro-joint">Transfer</button>
+                                <button class="ui red button col-xs-10 transfer"
+                                    id="transfer-micro-joint">Transfer</button>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-----Macro Formality Panels --->
+                    <!-----Macro Shakespeare Panels --->
                     <div id="preview-container-macro-shakespeare" class="start-xs preview-container">
                         <div id="analysis-section-macro-shakespeare" class="side-section">
                             <p class="side-section-header">Analysis</p>
                             <div class="ui divider"></div>
-                            <div id="shakespeare-progress" class="ui tiny violet progress" data-value="0"
-                                data-total="100">
+                            <div id="shakespeare-progress-macro-shakespeare" class="ui tiny violet progress"
+                                data-value="0" data-total="100">
                                 <div class="bar"></div>
                                 <div class="label label-text">Shakespeare : 0 %</span></div>
                             </div>
@@ -159,7 +168,8 @@
 
                             </div>
                             <div class="row around-xs middle-xs">
-                                <button class="ui blue button col-xs-10" id="analyze-macro-shakespeare">Analyze</button>
+                                <button class="ui blue button col-xs-10 analyze"
+                                    id="analyze-macro-shakespeare">Analyze</button>
                             </div>
 
                         </div>
@@ -181,7 +191,7 @@
                                 </div>
                             </div>
                             <div class="row center-xs middle-xs">
-                                <button class="ui red button col-xs-10"
+                                <button class="ui red button col-xs-10 transfer"
                                     id="transfer-macro-shakespeare">Transfer</button>
                             </div>
                         </div>
@@ -206,7 +216,8 @@
                                 </div>
                             </div>
                             <div class="row center-xs middle-xs">
-                                <button class="ui red button col-xs-10" id="transfer-macro-binary">Transfer</button>
+                                <button class="ui red button col-xs-10 transfer"
+                                    id="transfer-macro-binary">Transfer</button>
                             </div>
 
 

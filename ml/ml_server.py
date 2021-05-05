@@ -9,7 +9,7 @@ import sys
 # Pytorch imports
 import torch
 from torchtext.data.utils import get_tokenizer
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead
 
 # Import our ML code
 from attention.selfAttention import SelfAttention 
@@ -29,88 +29,145 @@ from transformers import HfArgumentParser, AutoConfig, AutoTokenizer
 import os
 
 
-# # Load spacy for tokenizing
-# import spacy
-# # Load English tokenizer, tagger, parser and NER
-# nlp = spacy.load("en_core_web_sm")
-
-# json.encoder.FLOAT_REPR = lambda o: format(o, '.2f')
-
 app = Flask(__name__)
 CORS(app)
 
-
-# configs, class_labels_dict = get_configs()
-# model_type = configs['model_type']
-
-# if model_type == "self_attention":
-#     batch_size = configs['batch_size'] 
-#     max_length = configs['max_length']
-#     vocab_dict_path = configs['vocab_dict_path'] 
-#     model_path = configs['model_path']
-#     vocab_size = configs['vocab_size']
-#     embedding_length = configs['embedding_length']
-#     hidden_size = configs['hidden_size']
-#     output_size = configs['output_size']
-
-#     # Load vocab_dict
-#     vocab_dict = load_vocab_dict(vocab_dict_path)
-#     # load pytorch model
-#     weights = torch.zeros((vocab_size, embedding_length))
-#     model = SelfAttention(batch_size, output_size, hidden_size, vocab_size, 
-#                     embedding_length, weights)
-#     model = load_pytorch_model(model, model_path)
-#     # Load tokenizer
-#     tokenizer = get_tokenizer('basic_english')
-    
-# elif model_type == "bert":
-#     batch_size = configs['batch_size'] 
-#     model_path = configs['model_path']
-#     model = AutoModelForSequenceClassification.from_pretrained(model_path)
-#     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english", model_max_length=64)
-    
-# # Use GPU if available
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# model.to(device)
-
-model_args = ModelArguments(
-    model_name_or_path="distilbert-base-uncased",
-    model_nick="distilbert_uncased",
-    cache_dir="./models/cache"
-)
-
-data_args = DataTrainingArguments(
-    max_seq_len=64,
-    task="formality+jokes"
-)
-
-training_args = TrainingArguments(
-    output_dir = "./models/distilbert_uncased/formality+jokes/joint",
-    train_jointly= True
-)
-idx_to_classes = {
-    'formality': {'0': 'informal', '1': 'formal'},
-    'jokes': {'0': 'nojoke', '1': 'joke'}
+MODEL_PATHS = {
+    'micro-formality' : {
+        "classifier": "./models/distilbert_uncased_2/formality+emo/joint",
+        "classifier_name": "distilbert-base-uncased",
+        "classifier_nick": "distilbert_uncased_2",
+        "classifier_task" : "formality+emo",
+        "idx_to_classes" : {
+            'formality': {'0': 'informal', '1': 'formal'},
+            'emo': {'0': 'sad', '1': 'happy'}
+        },
+        "label_dims" : {'formality': 1, 'emo': 1},
+        "transfer" : "./models/t5_transfer_formality_3",
+        "transfer_name" : "t5-small",
+        "transfer_nick" : "t5_transfer_formality_3",
+    },
+    'micro-joint' : {
+        "classifier": "./models/distilbert_uncased_2/formality+emo/joint",
+        "classifier_name": "distilbert-base-uncased",
+        "classifier_nick": "distilbert_uncased_2",
+        "classifier_task" : "formality+emo",
+        "idx_to_classes" : {
+            'formality': {'0': 'informal', '1': 'formal'},
+            'emo': {'0': 'sad', '1': 'happy'}
+        },
+        "label_dims" : {'formality': 1, 'emo': 1},
+        "transfer" : "./models/t5_transfer_formality_joint",
+        "transfer_name" : "t5-small",
+        "transfer_nick" : "t5_transfer_formality_joint",
+    },
+    'macro-shakespeare' : {
+        "classifier": "./models/distilbert_uncased_2/shakespeare/joint",
+        "classifier_name": "distilbert-base-uncased",
+        "classifier_nick": "distilbert_uncased_2",
+        "classifier_task" : "shakespeare",
+        "idx_to_classes" : {
+            'shakespeare': {'0': 'noshakespeare', '1': 'shakespeare'}
+        },
+        "label_dims" : {'shakespeare': 1},
+        "transfer" : "./models/t5_transfer_shakespeare",
+        "transfer_name" : "t5-small",
+        "transfer_nick" : "t5_transfer_shakespeare",
+    },
+    'macro-binary' : {
+        "transfer_name" : "t5-small",
+        "transfer_shake" : "./models/t5_transfer_shakespeare_binary",
+        "transfer_nick_shake" : "t5_transfer_shakespeare_binary",
+        "transfer_abs" : "./models/t5_transfer_abstract_binary",
+        "transfer_nick_abs" : "t5_transfer_abstract_binary",
+        "transfer_wiki" : "./models/t5_transfer_wiki_binary",
+        "transfer_nick_wiki" : "t5_transfer_wiki_binary",
+    }
 }
-label_dims = {'formality': 1, 'jokes': 1}
 
-model_joint = JointSeqClassifier.from_pretrained(
-    training_args.output_dir,
-    tasks=data_args.task.split('+'),
-    model_args=model_args,
-    task_if_single=None, 
-    joint = training_args.train_jointly,
-    label_dims=label_dims
-)
-trainer_joint = JointTrainer(
-    [training_args,model_args, data_args], 
-    model_joint, idx_to_classes = idx_to_classes
-)
-tokenizer_joint = AutoTokenizer.from_pretrained(
-    model_args.model_name_or_path, 
-    cache_dir=model_args.cache_dir,
-    model_max_length = data_args.max_seq_len
-)
+
+def load_models(mode):
+    global classifier_tokenizer, classifier_trainer, classifier_model, transfer_model, transfer_tokenizer, transfer_model_shake, transfer_model_abs, transfer_model_wiki
+    if mode in ['micro-formality','micro-joint','macro-shakespeare']:
+        transfer_model_shake = None
+        transfer_model_abs = None
+        transfer_model_wiki = None
+        
+        mode_paths = MODEL_PATHS[mode]
+        model_args = ModelArguments(
+            model_name_or_path=mode_paths['classifier_name'],
+            model_nick=mode_paths['classifier_nick'],
+            cache_dir="./models/cache"
+        )
+
+        data_args = DataTrainingArguments(
+            max_seq_len=64,
+            task=mode_paths['classifier_task']
+        )
+
+        training_args = TrainingArguments(
+            output_dir = mode_paths['classifier'],
+            train_jointly= True
+        )
+        idx_to_classes = mode_paths['idx_to_classes']
+
+        label_dims = mode_paths['label_dims']
+
+        classifier_model = JointSeqClassifier.from_pretrained(
+            training_args.output_dir,
+            tasks=data_args.task.split('+'),
+            model_args=model_args,
+            task_if_single=None, 
+            joint = training_args.train_jointly,
+            label_dims=label_dims
+        )
+        classifier_trainer = JointTrainer(
+            [training_args,model_args, data_args], 
+            classifier_model, idx_to_classes = idx_to_classes
+        )
+        classifier_tokenizer = AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path, 
+            cache_dir=model_args.cache_dir,
+            model_max_length = data_args.max_seq_len
+        )
+
+        transfer_tokenizer = AutoTokenizer.from_pretrained(mode_paths['transfer_name'])
+        transfer_model = AutoModelWithLMHead.from_pretrained(mode_paths['transfer'])   
+    elif mode in ['macro-binary']:
+        classifier_model = None
+        transfer_model = None
+        mode_paths = MODEL_PATHS[mode]
+
+        transfer_tokenizer = AutoTokenizer.from_pretrained(mode_paths['transfer_name'])
+        transfer_model_shake = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_shake'])
+        transfer_model_abs = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_abs'])
+        transfer_model_wiki = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_wiki'])
+        
+
+
+def get_buckets(prob, classname):
+    if classname=='formality':
+        if prob<0.2:
+            return 'low'
+        elif prob>0.9:
+            return 'high'
+        else:
+            return 'mid'
+    elif classname=='emo':
+        if prob<0.25:
+            return 'low'
+        elif prob>0.9:
+            return 'high'
+        else:
+            return 'mid'
+    if classname=='shakespeare':
+        if prob<0.1:
+            return 'low'
+        elif prob>0.9:
+            return 'high'
+        else:
+            return 'mid'
+
 
 @app.route("/hello")
 def hello():
@@ -120,89 +177,21 @@ def hello():
     }
     return res
 
-# @app.route('/heatmap', methods = ['GET'])
-# def get_classify_and_attn():
-#     '''
-#     Inputs:
-#     Input is assumed to be json of the form 
-#       {text: "some text"}.
-  
-#       Results:
-#       Run ML classification model on text. 
-      
-#       Returns:
-#     classification and attention weights
-#       '''
-#     # Get text input from request
-#     text = request.args.get('text', type = str)
-#     text = text.strip()
-#     if model_type == "self_attention":
-#         # tokenize text
-#         tokens = tokenizer(text) 
-#         # Get model outputs and attention matrix
-#         output, atten = attention.attention_utils.sent_pred(text, model, vocab_dict, 
-#                                 tokenizer, max_length, device, batch_size)
-#         # Sum over attention vector to get single value for each token
-#         token_attentions = atten[0].sum(axis=0).cpu().detach().tolist()[:len(tokens)]
-#         # Get model's class prediction
-#         preds = output.argmax(axis=1)
-#         pred = preds[0].item()
-#         output = output[0]
-#         softmax = torch.nn.Softmax(dim=0)
-#         scores = softmax(torch.tensor(output))
-        
-#         response = {}
-#         response['tokens'] = tokens
-#         response['class id'] = pred
-#         response['class'] = class_labels_dict[pred]
-#         response['scores'] = f"Class Scores: {class_labels_dict[0]} : {scores[0]*100:.2f}%, {class_labels_dict[1]} : {scores[1]*100:.2f}%"
-#         response['attns'] = token_attentions
-        
-#         # Return json response and 201 HTTP code
-#         print(response)
-#         return json.dumps(response), 201
-      
-#     elif model_type == "bert":
-#         doc = nlp(text)
-#         tokens = []
-#         sentence_seen = 0
 
-#         for token in [t.text for t in doc]:    
-#             occ = text[sentence_seen:].find(token)
-#             # Handle the case where the first character in the tokenm is an apostrophe, since BERT tokenizers 
-#             # from HuggingFace create a separate apostrophe token but SpaCy does not
-#             if token[0] != '\'':
-#                 start = occ + sentence_seen
-#                 end = start + len(token)
-#                 sentence_seen = sentence_seen + len(token) + occ
-#                 tokens.append({'text' : token, 'start' : start, 'end' : end})
-#             else:
-#                 start_apos = occ + sentence_seen
-#                 start_rest = start_apos + 1
-#                 end_apos = start_apos + 1
-#                 end_rest = start_rest + (len(token) - 1)
-#                 sentence_seen = sentence_seen + len(token) + occ
-#                 tokens.append({'text' : token[0], 'start' : start_apos, 'end' : end_apos})
-#                 tokens.append({'text' : token[1:], 'start' : start_rest, 'end' : end_rest})
+@app.route("/swap_models", methods=['POST'])
+def swap_models():
+    mode = request.args.get('mode', type = str)
+    print(mode)
+    try:
+        load_models(mode)
+    except Exception as e:
+       print(e)
+       return {'message' : 'Models Swap Failure! :('}, 500
+ 
+    return {'message' : 'Models Swap Success! :)'}, 200
 
-#         bert_tokens = tokenizer.convert_ids_to_tokens(tokenizer.encode(text))[1:-1]
-#         bert_token_mask = [i for i,b in enumerate(bert_tokens) if '##' not in b]
-        
-#         print(f'bert tokens {bert_tokens}')
-        
-#         pred, scores, attns = bert.bert_utils.sent_pred(text, model, tokenizer, device, batch_size)
-#         pred, scores, tokens = bert.bert_utils.process_outputs(pred, scores, attns, bert_token_mask, tokens)    
-#         response = {}
-#         response['text'] = text
-#         response['tokens'] = tokens
-#         response['class id'] = int(pred)
-#         response['class'] = class_labels_dict[pred]    
-#         response['scores'] = f"Class Scores: {class_labels_dict[0]} : {scores[0]*100:.2f}%, {class_labels_dict[1]} : {scores[1]*100:.2f}%"
-#         print(f"Heatmap RES\n{response}")
-#         return json.dumps(response), 201
-  
 
-@app.route('/joint_classification', methods = ['GET'])
+@app.route('/classification', methods = ['GET'])
 def get_joint_classify_and_salience():
     '''
     Inputs:
@@ -222,7 +211,7 @@ def get_joint_classify_and_salience():
     tokens = []
     sentence_seen = 0
 
-    joint_tokens = tokenizer_joint.convert_ids_to_tokens(tokenizer_joint.encode(lower))[1:-1]
+    joint_tokens = classifier_tokenizer.convert_ids_to_tokens(classifier_tokenizer.encode(lower))[1:-1]
     for token in joint_tokens:
         occ = lower[sentence_seen:].find(token)
         start = occ + sentence_seen
@@ -231,12 +220,199 @@ def get_joint_classify_and_salience():
         tokens.append({'text' : text[start:end], 'start' : start, 'end' : end})
     
     
-    res = trainer_joint.predict_for_sentence(lower, tokenizer_joint, salience=True)
+    res = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=True)
     res['tokens'] = tokens
     # print(f"JointClassify RES\n{res}")
     return res, 200
 
 
+@app.route('/transfer', methods = ['GET'])
+def get_transfer():
+    # Get text input from request
+    text = request.args.get('text', type = str)
+    mode = request.args.get('mode', type = str)
+    controls = request.args.get('controls', type = str)
+    text = text.strip()
+    # lower = text.lower()
+    lower = text
+    controls = json.loads(controls)
+
+    print(controls)
+
+    if mode=="micro-formality":
+        classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
+        input_bucket = get_buckets(float(classifier_output['formality']['prob']), 'formality')
+        output_bucket = ['low', 'mid', 'high'][int(controls['formality'])]
+        transfer_input = "transfer: "+lower+' | input: '+input_bucket + ' | output: '+output_bucket
+
+        t = transfer_tokenizer(transfer_input, return_tensors='pt')
+        gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+        transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
+
+        res = {
+            'input' : {
+                'text' : text,
+                'probs' : {
+                    'formality' : classifier_output['formality']['prob']
+                },
+            },
+            "goal" : f"Formality : {output_bucket}",
+            "suggestions":[]
+        }
+        for transfer in transfers:
+            cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
+            temp = {
+                'text' : transfer,
+                'probs' : {
+                    'formality' : cls_opt['formality']['prob']
+                }
+            }
+            res['suggestions'].append(temp)
+        
+    elif mode=="macro-shakespeare":
+        classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
+        input_bucket = get_buckets(float(classifier_output['shakespeare']['prob']), 'shakespeare')
+        output_bucket = ['low', 'mid', 'high'][int(controls['shakespeare'])]
+        transfer_input = "transfer: "+lower+' | input: '+input_bucket + ' | output: '+output_bucket
+
+        t = transfer_tokenizer(transfer_input, return_tensors='pt')
+        gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+        transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
+
+        res = {
+            'input' : {
+                'text' : text,
+                'probs' : {
+                    'shakespeare' : classifier_output['shakespeare']['prob']
+                },
+            },
+            "goal" : f"Shakespeare : {output_bucket}",
+            "suggestions":[]
+        }
+        for transfer in transfers:
+            cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
+            temp = {
+                'text' : transfer,
+                'probs' : {
+                    'shakespeare' : cls_opt['shakespeare']['prob']
+                }
+            }
+            res['suggestions'].append(temp)
+
+    elif mode=="micro-joint":
+        classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
+        input_bucket_f = get_buckets(float(classifier_output['formality']['prob']), 'formality')
+        input_bucket_e = get_buckets(float(classifier_output['emo']['prob']), 'emo')
+        output_bucket_f = ['low', 'mid', 'high'][int(controls['formality'])]
+        output_bucket_e = ['low', 'mid', 'high'][int(controls['emo'])]
+        transfer_input = 'transfer: ' + lower + ' | input formality: '+input_bucket_f + ' | input emotion: '+input_bucket_e +' | output formality: '+output_bucket_f +' | output emotion: '+output_bucket_e
+
+        print('\n\n',transfer_input,'\n\n')
+        
+        t = transfer_tokenizer(transfer_input, return_tensors='pt')
+        gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+        transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
+
+        res = {
+            'input' : {
+                'text' : text,
+                'probs' : {
+                    'formality' : classifier_output['formality']['prob'],
+                    'emo' : classifier_output['emo']['prob']
+                },
+            },
+            "goal" : f"Formality : {output_bucket_f}; Emotion : {output_bucket_e}",
+            "suggestions":[]
+        }
+        for transfer in transfers:
+            cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
+            temp = {
+                'text' : transfer,
+                'probs' : {
+                    'formality' : cls_opt['formality']['prob'],
+                    'emo' : cls_opt['emo']['prob']
+                }
+            }
+            res['suggestions'].append(temp)
+        
+    elif mode=="macro-binary":
+        transfer_input = 'transfer: ' + lower
+        print('\n\n',transfer_input,'\n\n')
+        t = transfer_tokenizer(transfer_input, return_tensors='pt')
+        
+        if int(controls['macro']) == 0:
+            gen = transfer_model_wiki.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+        elif int(controls['macro']) == 1:
+            gen = transfer_model_shake.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+        elif int(controls['macro']) == 2:
+            gen = transfer_model_abs.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
+                                            num_beams=12,
+                                            #    early_stopping=True,
+                                            encoder_no_repeat_ngram_size=5,
+                                            no_repeat_ngram_size=3,
+                                            num_beam_groups=3,
+                                            diversity_penalty=0.5,
+                                            num_return_sequences=int(controls['suggestions'])
+                                            )
+         
+        transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
+
+        res = {
+            'input' : {
+                'text' : text,
+            },
+            "goal" : ["Wikipedia", "Shakespeare", "Scientific Abstract"][int(controls['macro'])],
+            "suggestions":[]
+        }
+        for transfer in transfers:
+            temp = {
+                'text' : transfer,
+            }
+            res['suggestions'].append(temp)
+    return res, 200
+
+
 
 if __name__ == '__main__':
+    load_models('micro-formality')
     app.run(host="0.0.0.0", port=5001, debug=True)

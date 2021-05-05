@@ -126,22 +126,39 @@ $('.dropdown').dropdown({
             else if (styleMode === "macro-binary") {
                 $('#preview-container-macro-binary').show();
             }
+            $('#dimmer-model-swap').addClass('active');
+            console.log(styleMode);
+            $.ajax({
+                url: 'http://0.0.0.0:5000/swap_models',
+                method: "POST",
+                crossDomain: true,
+                dataType: 'json',
+                data: { mode: styleMode },
+                success: (d) => {
+                    console.log('models swapped!');
+                    $('#dimmer-model-swap').removeClass('active');
+                },
+                error: (d) => {
+                    console.log('ERROR! :(');
+                    $('#dimmer-model-swap').removeClass('active');
+                }
+            });
         }
     });
 
 $('.analyze').click(() => {
     let txt = editorText;
     let modeSelected = styleMode;
+    console.log('lol');
     $.ajax({
         url: 'http://0.0.0.0:5000/analyze',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt, mode: modeSelected },
         success: (d) => {
-            // displayHeatmap(d.attn);
-            setProgress(d.joint);
-            setSliders(d.joint);
-            displayJointHeatmap(d.joint, dropdownSelection, quillEditor);
+            console.log(d);
+            setProgress(d.results, modeSelected);
+            displayJointHeatmap(d.results, attentionViz, quillEditor);
 
         }
     });
@@ -168,11 +185,15 @@ $('.transfer').click(() => {
     }
     else if (styleMode === "macro-shakespeare") {
         controls = {
-            shakespeare: $('#formality-slider-macro-shakespeare').slider('get value'),
+            shakespeare: $('#shakespeare-slider-macro-shakespeare').slider('get value'),
+            suggestions: $('#num-suggestions-macro-shakespeare').val(),
         }
     }
     else {
-        return 0;
+        controls = {
+            macro: $('#binary-slider').slider('get value'),
+            suggestions: $('#num-suggestions-macro-binary').val(),
+        }
     }
 
 
@@ -182,8 +203,8 @@ $('.transfer').click(() => {
         dataType: 'json',
         data: { text: txt, controls: JSON.stringify(controls), mode: modeSelected },
         success: (d) => {
-            // console.log(d);
-            displayModal(d);
+            console.log(d);
+            displayModal(d, styleMode);
             function selectSuggestion() {
                 let k = $(this).data('suggestion-id');
                 // console.log(k, d.suggestions[k]);

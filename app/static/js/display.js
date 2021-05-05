@@ -1,41 +1,94 @@
 import { RGBAToHexA } from "./utils.js";
 
-function setProgress(data) {
-    $('#formality-progress')
-        .progress({
-            duration: 200,
-            percent: parseInt(data.formality.prob * 100),
-            text: {
-                active: 'Formality : {percent} %'
-            }
-        })
-        ;
-    $('#emo-progress')
-        .progress({
-            duration: 200,
-            percent: parseInt(data.jokes.prob * 100),
-            text: {
-                active: 'Emotion : {percent} %'
-            }
-        })
-        ;
+function setProgress(data, mode) {
+    console.log(mode, data);
+    if (mode === "micro-formality") {
+        $('#formality-progress-' + mode)
+            .progress({
+                duration: 200,
+                percent: parseInt(data.formality.prob * 100),
+                text: {
+                    active: 'Formality : {percent} %'
+                }
+            });
+    }
+    else if (mode === "micro-joint") {
+        $('#formality-progress-' + mode)
+            .progress({
+                duration: 200,
+                percent: parseInt(data.formality.prob * 100),
+                text: {
+                    active: 'Formality : {percent} %'
+                }
+            });
+        $('#emo-progress-' + mode)
+            .progress({
+                duration: 200,
+                percent: parseInt(data.emo.prob * 100),
+                text: {
+                    active: 'Emotion : {percent} %'
+                }
+            });
+    }
+    else if (mode === "macro-shakespeare") {
+        $('#shakespeare-progress-' + mode)
+            .progress({
+                duration: 200,
+                percent: parseInt(data.shakespeare.prob * 100),
+                text: {
+                    active: 'Shakespeare : {percent} %'
+                }
+            });
+
+    }
+
+
 }
 
-function displayModal(data) {
+function displayModal(data, mode) {
     let modalHTML = '';
 
     let originalText = "<div class='row middle-xs'>" +
-        "<p class='modal-text'><span class='ui label'>Original Text</span><span class='original'>" + data.input.text + "</span></p>" +
-        "<div class='ui teal image label'>70%<div class='detail'>Formality</div></div>" +
-        "<div class='ui yellow image label'>2%<div class='detail'>Emotion</div></div>" +
-        "</div>";
-    let suggestionText = '<h4 class="ui horizontal divider header"><i class="lightbulb icon"></i></h4>';
+        "<p class='modal-text'><span class='ui label'>Original Text</span><span class='original'>" + data.input.text + "</span></p>"
+    if (mode === "micro-formality") {
+        originalText += "<div class='ui teal image label'>" + (data.input.probs.formality * 100).toFixed(0) + "%<div class='detail'>Formality</div></div>";
+        originalText += "</div>";
+    }
+    else if (mode === "micro-joint") {
+        originalText += "<div class='ui teal image label'>" + (data.input.probs.formality * 100).toFixed(0) + "%<div class='detail'>Formality</div></div>";
+        originalText += "<div class='ui yellow image label'>" + (data.input.probs.emo * 100).toFixed(0) + "%<div class='detail'>Emotion</div></div>";
+        originalText += "</div>";
+    }
+    else if (mode === "macro-shakespeare") {
+        originalText += "<div class='ui violet image label'>" + (data.input.probs.shakespeare * 100).toFixed(0) + "%<div class='detail'>Shakespeare</div></div>";
+        originalText += "</div>";
+
+    }
+    else if (mode === "macro-binary") {
+        originalText += "</div>";
+
+    }
+
+    let suggestionText = '<h4 class="ui horizontal divider header"><i class="lightbulb icon"></i>Goal - ' + data.goal + '</h4>';
     for (var i = 0; i < data.suggestions.length; i++) {
         suggestionText += "<div class='row middle-xs suggestion-item' data-suggestion-id='" + i + "'>" +
-            "<p class='modal-text'><span class='ui label'>Suggestion " + (i + 1) + "</span><span class='suggestion'>" + data.suggestions[i].text + "</span></p>" +
-            "<div class='ui teal image label'>70%<div class='detail'>Formality</div></div>" +
-            "<div class='ui yellow image label'>2%<div class='detail'>Emotion</div></div>" +
-            "</div>";
+            "<p class='modal-text'><span class='ui label'>Suggestion " + (i + 1) + "</span><span class='suggestion'>" + data.suggestions[i].text + "</span></p>";
+        if (mode === "micro-formality") {
+            suggestionText += "<div class='ui teal image label'>" + (data.suggestions[i].probs.formality * 100).toFixed(0) + "%<div class='detail'>Formality</div></div>";
+            suggestionText += "</div>";
+        }
+        else if (mode === "micro-joint") {
+            suggestionText += "<div class='ui teal image label'>" + (data.suggestions[i].probs.formality * 100).toFixed(0) + "%<div class='detail'>Formality</div></div>";
+            suggestionText += "<div class='ui yellow image label'>" + (data.suggestions[i].probs.emo * 100).toFixed(0) + "%<div class='detail'>Emotion</div></div>";
+            suggestionText += "</div>";
+        }
+        else if (mode === "macro-shakespeare") {
+            suggestionText += "<div class='ui violet image label'>" + (data.suggestions[i].probs.shakespeare * 100).toFixed(0) + "%<div class='detail'>Shakespeare</div></div>";
+            suggestionText += "</div>";
+        }
+        else if (mode === "macro-binary") {
+            suggestionText += "</div>";
+        }
     }
     modalHTML = originalText + suggestionText;
     // console.log(modalHTML);
@@ -101,7 +154,10 @@ function displayJointHeatmap(data, dropdownSelection, quillEditor) {
         query = 'formality'
     }
     else if (dropdownSelection === 'emo') {
-        query = 'jokes'
+        query = 'emo'
+    }
+    else if (dropdownSelection === 'shakespeare') {
+        query = 'shakespeare'
     }
 
     if (query != null) {
