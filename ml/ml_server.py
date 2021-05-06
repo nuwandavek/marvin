@@ -144,6 +144,24 @@ def load_models(mode):
         transfer_model_wiki = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_wiki'])
         
 
+def bucket_match(bucket1, bucket2):
+    if bucket2 == 'high':
+        if bucket1 in ['mid','high']:
+            return True
+        else:
+            return False
+    elif bucket2 == 'low':
+        if bucket1 in ['mid','low']:
+            return True
+        else:
+            return False
+    elif bucket2 == 'mid':
+        if bucket1 in ['mid','low']:
+            return True
+        else:
+            return False
+    
+    
 
 def get_buckets(prob, classname):
     if classname=='formality':
@@ -225,7 +243,6 @@ def get_joint_classify_and_salience():
     # print(f"JointClassify RES\n{res}")
     return res, 200
 
-
 @app.route('/transfer', methods = ['GET'])
 def get_transfer():
     # Get text input from request
@@ -247,13 +264,14 @@ def get_transfer():
 
         t = transfer_tokenizer(transfer_input, return_tensors='pt')
         gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
-                                            num_beams=12,
+                                            num_beams=15,
                                             #    early_stopping=True,
                                             encoder_no_repeat_ngram_size=5,
                                             no_repeat_ngram_size=3,
-                                            num_beam_groups=3,
+                                            num_beam_groups=5,
                                             diversity_penalty=0.5,
-                                            num_return_sequences=int(controls['suggestions'])
+                                            # num_return_sequences=int(controls['suggestions'])
+                                            num_return_sequences=10
                                             )
         transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
 
@@ -265,8 +283,8 @@ def get_transfer():
                 },
             },
             "goal" : f"Formality : {output_bucket}",
-            "suggestions":[]
         }
+        suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -275,7 +293,14 @@ def get_transfer():
                     'formality' : cls_opt['formality']['prob']
                 }
             }
-            res['suggestions'].append(temp)
+            suggestions.append(temp)
+
+        suggestions = [x for x in suggestions if bucket_match(get_buckets(float(x['probs']['formality']),'formality'),output_bucket)]
+        if len(suggestions)>0:
+            suggestions.sort(key=lambda x: float(x['probs']['formality']), reverse=True)
+            res['suggestions'] = suggestions[:int(controls['suggestions'])]
+        else:
+            res['suggestions'] = []
         
     elif mode=="macro-shakespeare":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
@@ -305,6 +330,7 @@ def get_transfer():
             "goal" : f"Shakespeare : {output_bucket}",
             "suggestions":[]
         }
+        suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -313,8 +339,15 @@ def get_transfer():
                     'shakespeare' : cls_opt['shakespeare']['prob']
                 }
             }
-            res['suggestions'].append(temp)
+            suggestions.append(temp)
 
+        suggestions = [x for x in suggestions if bucket_match(get_buckets(float(x['probs']['shakespeare']),'shakespeare'),output_bucket)]
+        if len(suggestions)>0:
+            suggestions.sort(key=lambda x: float(x['probs']['shakespeare']), reverse=True)
+            res['suggestions'] = suggestions[:int(controls['suggestions'])]
+        else:
+            res['suggestions'] = []
+        
     elif mode=="micro-joint":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
         input_bucket_f = get_buckets(float(classifier_output['formality']['prob']), 'formality')

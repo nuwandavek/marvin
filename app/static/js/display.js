@@ -70,6 +70,9 @@ function displayModal(data, mode) {
     }
 
     let suggestionText = '<h4 class="ui horizontal divider header"><i class="lightbulb icon"></i>Goal - ' + data.goal + '</h4>';
+    if (data.suggestions.length === 0) {
+        suggestionText += "<div class='row middle-xs center-xs'>Sorry, we do not have any good suggestions for this transfer!</div>";
+    }
     for (var i = 0; i < data.suggestions.length; i++) {
         suggestionText += "<div class='row middle-xs suggestion-item' data-suggestion-id='" + i + "'>" +
             "<p class='modal-text'><span class='ui label'>Suggestion " + (i + 1) + "</span><span class='suggestion'>" + data.suggestions[i].text + "</span></p>";
