@@ -272,8 +272,10 @@ class JointTrainer(object):
                 self.model.zero_grad()
                 class_score.backward(retain_graph=True)
                 grads = [h_state.grad for h_state in hidden_states]
-                temp = list(stack(grads).abs().max(axis=0)[0].squeeze().norm(dim=1).detach().cpu().numpy())
-                predictions[task]['salience'] = [str(x) for x in temp if x!=0][1:-1]
+                temp = stack(grads).abs().max(axis=0)[0].squeeze()[attention_mask.squeeze()>0][1:-1]
+                temp = temp.mean(dim=1)
+                temp = list((temp / temp.sum(dim=0)).detach().cpu().numpy())
+                predictions[task]['salience'] = [str(x) for x in temp if x!=0]
             return predictions
         else:
             for task in self.tasks:

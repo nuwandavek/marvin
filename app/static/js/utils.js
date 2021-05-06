@@ -2,6 +2,12 @@ function RGBAToHexA(r, g, b, a) {
     r = r.toString(16);
     g = g.toString(16);
     b = b.toString(16);
+    if (a > 1) {
+        a = 1
+    }
+    else if (a < 0) {
+        a = 0
+    }
     a = Math.round(a * 255).toString(16);
 
     if (r.length == 1)
