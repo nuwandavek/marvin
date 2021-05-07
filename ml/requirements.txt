@@ -1,0 +1,10 @@
+Flask
+pymysql
+requests
+flask-cors
+torch
+torchtext
+pandas
+tensorboard
+scikit-learn
+transformers==4.3.3

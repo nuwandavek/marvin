@@ -5,18 +5,12 @@ from flask_cors import CORS
 # basic imports
 import json
 import sys
+import os 
 
 # Pytorch imports
 import torch
 from torchtext.data.utils import get_tokenizer
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead
-
-# Import our ML code
-from attention.selfAttention import SelfAttention 
-import attention.attention_utils
-import bert.bert_utils
-from attention.utils import load_pytorch_model, load_vocab_dict
-from config.model_config import get_configs
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead, AutoConfig, HfArgumentParser
 
 # Joint Model imports
 from jointclassifier.joint_args import ModelArguments, DataTrainingArguments, TrainingArguments
@@ -24,9 +18,6 @@ from jointclassifier.joint_dataloader import load_dataset
 from jointclassifier.joint_trainer import JointTrainer
 from jointclassifier.single_trainer import SingleTrainer
 from jointclassifier.joint_model_v1 import JointSeqClassifier
-
-from transformers import HfArgumentParser, AutoConfig, AutoTokenizer
-import os
 
 
 app = Flask(__name__)

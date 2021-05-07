@@ -1,0 +1,4 @@
+Flask
+pymysql
+requests
+flask-cors

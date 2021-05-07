@@ -1,0 +1,1 @@
+docker run  -it --mount type=bind,source=/home/nuwandavek/Documents/research/marvin/ml/models,target=/app/models --network host -p 5001:5001 marvin_ml_image

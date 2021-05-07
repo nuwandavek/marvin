@@ -1,0 +1,1 @@
+docker run  -it --network host -p 5000:5000 marvin_app_image
