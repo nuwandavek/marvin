@@ -2,7 +2,7 @@
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import requests
-
+import pymysql
 # basic imports
 import json
 import sys
@@ -14,6 +14,7 @@ app = Flask(__name__,
         )
 CORS(app)
 
+con = pymysql.connect(host='0.0.0.0', user='root', password='root', database='marvin')
 
 @app.route("/hello")
 def hello():
@@ -69,6 +70,29 @@ def get_transfer_suggestions():
 	
 	response_transfer = requests.get('http://0.0.0.0:5001/transfer', params={'text': text, 'mode': mode, 'controls':controls}).json()
 	return response_transfer, 200
+
+@app.route('/transfer_action', methods = ['POST'])
+def transfer_action():
+	original = request.form.get('original', type = str).strip()
+	original_val = '|'.join([k+":"+str(v) for k,v in json.loads(request.form.get('original_val', type = str).strip()).items()])
+	accepted = request.form.get('accepted', type = str).strip()
+	accepted_val = '|'.join([k+":"+str(v) for k,v in json.loads(request.form.get('accepted_val', type = str).strip()).items()])
+	mode = request.form.get('mode', type = str).strip()
+	goal = request.form.get('goal', type = str).strip()
+	
+	print('\n\n')
+	print(mode, goal)
+	print(original, original_val)
+	print(accepted, accepted_val)
+	print('\n\n')
+	with con.cursor() as cur:
+		cur.execute(f'INSERT INTO accepted_transfers (mode, goal, original, original_val, accepted, accepted_val) VALUES ("{mode}", "{goal}", "{original}", "{original_val}","{accepted}", "{accepted_val}")')
+	con.commit()
+	with con.cursor() as cur:
+		cur.execute(f'SELECT LAST_INSERT_ID()')
+	row = cur.fetchone()
+	
+	return {'id' : row[0]} , 201
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

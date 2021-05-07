@@ -211,8 +211,22 @@ $('.transfer').click(() => {
                 quillEditor.setContents([{ insert: d.suggestions[k].text }]);
                 $('#transfer-suggestions')
                     .modal('hide');
+                console.log('Sending mysql request');
+                $.ajax({
+                    url: 'http://0.0.0.0:5000/transfer_action',
+                    method: "POST",
+                    crossDomain: true,
+                    dataType: 'json',
+                    data: {
+                        mode: modeSelected, goal: d.goal, original: d.input.text, original_val: JSON.stringify(d.input.probs),
+                        accepted: d.suggestions[k].text, accepted_val: JSON.stringify(d.suggestions[k].probs)
+                    },
+                    success: (d) => {
+                        console.log(d);
 
-            }
+                    },
+                });
+            };
             $('.suggestion-item').click(selectSuggestion);
             $('#transfer-suggestions')
                 .modal({
