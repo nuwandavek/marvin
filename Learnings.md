@@ -104,9 +104,9 @@ def get_stats():
    **Goal :** Convert to Wikipedia
    **Prediction :** Breaking Bad won all the Emmy Awards for its outstanding performance.
 
--  **Input :** What do you think?
-   **Goal :** Convert to Shakespeare - high
-   **Prediction :** What dost thou say?
+-  **Input :** What do you think?  
+   **Goal :** Convert to Shakespeare - high  
+   **Prediction :** What dost thou say?  
 
 ## Running Marvin:
 Marvin has two server - docker images (App, ) and a MySQL docker image, .
