@@ -246,6 +246,23 @@ class JointTrainer(object):
 
 
     def predict_for_sentence(self, sentence, tokenizer, salience=False):
+        '''
+        Use the model to make a classification on a given sentence. 
+        
+        Arguments:
+          sentence : str. The sentence to classify.
+          tokenizer : HuggingFace transformers tokenizer.
+          salience : bool (optional). Boolean flag for whether to return saliency maps
+          
+        Returns:
+          predictions: dict. 
+            Contains keys for each of the joint_trainer's tasks.
+            For each task, there is another dict with keys 'class'
+            for classification class label as a string, 'prob' for the probabilty
+            score for this class as a string representation of a float, 
+            and 'salience' as an array of string representations of floats for each
+            the salience of each token from the input sentence.
+        '''
         self.model.eval()
         tokenized_sentence = tokenizer(sentence, padding='max_length', return_tensors='pt', truncation = True)
         input_ids = tokenized_sentence['input_ids'].to(self.device)
