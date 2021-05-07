@@ -1,8 +1,17 @@
 # ML
+## Running the App
+```
+#Without Docker
+python ml_server.py
 
-To Run the ML server, run `python ml_server.py`
+#With Docker
+bash run_ml_docker.sh
+```
 
-
+## Build the docker images
+```
+bash ../build_docker_images.sh
+```
 ---
 
 ## Bucket Details
