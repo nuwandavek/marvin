@@ -19,27 +19,27 @@ from jointclassifier.joint_trainer import JointTrainer
 from jointclassifier.single_trainer import SingleTrainer
 from jointclassifier.joint_model_v1 import JointSeqClassifier
 
-#import openai
+import openai
 
 app = Flask(__name__)
 CORS(app)
 
-#with open("./key.txt") as fob:
-#    openai.api_key = fob.read().strip()
+with open("./key.txt") as fob:
+   openai.api_key = fob.read().strip()
 
-#def get_openai_result(text):
-#    prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
+def get_openai_result(text):
+   prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
 
-#    prompt = prompt + text + "\nFormal Language:"
-#    res = openai.Completion.create(
-#        engine="davinci",
-#       prompt= prompt,
-#        max_tokens=64,
-#        temperature=0.15,
-#        stop="\n"
-#    )
+   prompt = prompt + text + "\nFormal Language:"
+   res = openai.Completion.create(
+       engine="davinci",
+      prompt= prompt,
+       max_tokens=64,
+       temperature=0.15,
+       stop="\n"
+   )
 
- #   return res.choices[0].text.strip()
+   return res.choices[0].text.strip()
 
 MODEL_PATHS = {
     'micro-formality' : {
@@ -233,10 +233,10 @@ def get_joint_classify_and_salience():
         classification and input salience weights.
         It has a key 'tokens' which is an array of the 
         tokenized input text. It also has a key for each 
-        classification task. Each of these are themseleves
+        classification task. Each of these are themselves
         dicts containing keys for the predicted class, 
         the probability of this class, and also the salience score
-        for each token from the toeknized input. 
+        for each token from the tokenized input. 
     '''
     # Get text input from request
     text = request.args.get('text', type = str)
@@ -322,11 +322,11 @@ def get_transfer():
         else:
             res['suggestions'] = []
 
-#        if output_bucket=='high':
-#            oai = get_openai_result(text)
-#            res['openai'] = oai
-#        else:
-#            res['openai'] = ''
+       if output_bucket=='high':
+           oai = get_openai_result(text)
+           res['openai'] = oai
+       else:
+           res['openai'] = ''
         
     elif mode=="macro-shakespeare":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
@@ -354,8 +354,8 @@ def get_transfer():
                 },
             },
             "goal" : f"Shakespeare : {output_bucket}",
-            "suggestions":[]}
- #           "openai":""
+            "suggestions":[],
+           "openai":""}
         suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
@@ -405,9 +405,9 @@ def get_transfer():
                 },
             },
             "goal" : f"Formality : {output_bucket_f}; Emotion : {output_bucket_e}",
-            "suggestions":[]}
-#            "openai":""
-#        }
+            "suggestions":[],
+           "openai":""
+       }
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -462,9 +462,9 @@ def get_transfer():
                 'text' : text,
             },
             "goal" : ["Wikipedia", "Shakespeare", "Scientific Abstract"][int(controls['macro'])],
-            "suggestions":[]}
-            #"openai":""
-        #}
+            "suggestions":[],
+            "openai":""
+        }
         for transfer in transfers:
             temp = {
                 'text' : transfer,
