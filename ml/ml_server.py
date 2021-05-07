@@ -19,27 +19,27 @@ from jointclassifier.joint_trainer import JointTrainer
 from jointclassifier.single_trainer import SingleTrainer
 from jointclassifier.joint_model_v1 import JointSeqClassifier
 
-import openai
+#import openai
 
 app = Flask(__name__)
 CORS(app)
 
-with open("./key.txt") as fob:
-    openai.api_key = fob.read().strip()
+#with open("./key.txt") as fob:
+#    openai.api_key = fob.read().strip()
 
-def get_openai_result(text):
-    prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
+#def get_openai_result(text):
+#    prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
 
-    prompt = prompt + text + "\nFormal Language:"
-    res = openai.Completion.create(
-        engine="davinci",
-        prompt= prompt,
-        max_tokens=64,
-        temperature=0.15,
-        stop="\n"
-    )
+#    prompt = prompt + text + "\nFormal Language:"
+#    res = openai.Completion.create(
+#        engine="davinci",
+#       prompt= prompt,
+#        max_tokens=64,
+#        temperature=0.15,
+#        stop="\n"
+#    )
 
-    return res.choices[0].text.strip()
+ #   return res.choices[0].text.strip()
 
 MODEL_PATHS = {
     'micro-formality' : {
@@ -225,12 +225,19 @@ def get_joint_classify_and_salience():
     Input is assumed to be json of the form 
       {text: "some text"}.
   
-      Results:
+    Results:
       Run ML classification model on text. 
       
-      Returns:
-    classification and attention weights
-      '''
+    Returns:
+      res: a dict containing information on 
+        classification and input salience weights.
+        It has a key 'tokens' which is an array of the 
+        tokenized input text. It also has a key for each 
+        classification task. Each of these are themseleves
+        dicts containing keys for the predicted class, 
+        the probability of this class, and also the salience score
+        for each token from the toeknized input. 
+    '''
     # Get text input from request
     text = request.args.get('text', type = str)
     text = text.strip()
@@ -240,10 +247,10 @@ def get_joint_classify_and_salience():
 
     joint_tokens = classifier_tokenizer.convert_ids_to_tokens(classifier_tokenizer.encode(lower))[1:-1]
     for token in joint_tokens:
+        # Handle case where the tokenizer splits some suffix as it's own token
         if len(token) > 2:
           if token[:2] == '##':
             token = token[2:]
-            print(token)
         occ = lower[sentence_seen:].find(token)
         start = occ + sentence_seen
         end = start + len(token)
@@ -254,7 +261,6 @@ def get_joint_classify_and_salience():
     
     res = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=True)
     res['tokens'] = tokens
-    # print(f"JointClassify RES\n{res}")
     return res, 200
 
 @app.route('/transfer', methods = ['GET'])
@@ -316,11 +322,11 @@ def get_transfer():
         else:
             res['suggestions'] = []
 
-        if output_bucket=='high':
-            oai = get_openai_result(text)
-            res['openai'] = oai
-        else:
-            res['openai'] = ''
+#        if output_bucket=='high':
+#            oai = get_openai_result(text)
+#            res['openai'] = oai
+#        else:
+#            res['openai'] = ''
         
     elif mode=="macro-shakespeare":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
@@ -348,9 +354,8 @@ def get_transfer():
                 },
             },
             "goal" : f"Shakespeare : {output_bucket}",
-            "suggestions":[],
-            "openai":""
-        }
+            "suggestions":[]}
+ #           "openai":""
         suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
@@ -400,9 +405,9 @@ def get_transfer():
                 },
             },
             "goal" : f"Formality : {output_bucket_f}; Emotion : {output_bucket_e}",
-            "suggestions":[],
-            "openai":""
-        }
+            "suggestions":[]}
+#            "openai":""
+#        }
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -457,9 +462,9 @@ def get_transfer():
                 'text' : text,
             },
             "goal" : ["Wikipedia", "Shakespeare", "Scientific Abstract"][int(controls['macro'])],
-            "suggestions":[],
-            "openai":""
-        }
+            "suggestions":[]}
+            #"openai":""
+        #}
         for transfer in transfers:
             temp = {
                 'text' : transfer,
