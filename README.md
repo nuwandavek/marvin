@@ -32,7 +32,7 @@ At the School of Information we find ourselves at the intersection of cutting ed
     - Eg: Low Formality and Happy →  High Formality and Sad
 - Visualization of feature importance for styles
     - Understand how each word contributes to scores
-
+- Record user actions and generate new datasets forming a closed machine-in-the-loop system
 
 ## Project Deliverables
 
