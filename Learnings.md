@@ -88,6 +88,10 @@ def get_stats():
         **Wikipedia :** He created a new therapeutic technique called logotherapy.  
         **Abstract :** He developed a novel therapeutic technique called logotherapy.  
 
+-  **Input :** I'm gonna go play now, u coming?
+   **Goal :** Convert to Formal - high  
+   **Prediction :** I am going to play now, are you coming?  
+   
 -  **Input :** No, it’s just a silly old skit from SNL.  
    **Goal :** Convert to Formal  
    **Prediction :** No it’s just an old skit of SNL.  
