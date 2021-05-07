@@ -93,6 +93,11 @@ function displayModal(data, mode) {
             suggestionText += "</div>";
         }
     }
+    if (data.openai != '') {
+        suggestionText += "<div class='row middle-xs suggestion-item' data-suggestion-id='" + data.suggestions.length + "'>" +
+            "<p class='modal-text'><span class='ui label'>OpenAI GPT3 Suggestion</span><span class='suggestion'>" + data.openai + "</span></p></div>";
+    }
+
     modalHTML = originalText + suggestionText;
     // console.log(modalHTML);
     $('#transfer-content').html(modalHTML);

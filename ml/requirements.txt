@@ -8,3 +8,4 @@ pandas
 tensorboard
 scikit-learn
 transformers==4.3.3
+openai
