@@ -78,40 +78,37 @@ def get_stats():
 	- Salience over tokens for each class
   	'''
 ```
+
 ## Examples:
 
-Input :He made a new therapeutic technique called logotherapy.
-Goal :Convert to Shakespeare, Wikipedia, Abstract
-Prediction :
-Shakespeare: He hath made a new therapeutic technique, logotherapy.
-Wikipedia: He created a new therapeutic technique called logotherapy.
-Abstract: He developed a novel therapeutic technique called logotherapy
+-  **Input :** He made a new therapeutic technique called logotherapy.  
+   **Goal :** Convert to Shakespeare, Wikipedia, Abstract  
+   **Prediction :**  
+      - **Shakespeare :** He hath made a new therapeutic technique, logotherapy.  
+        **Wikipedia :** He created a new therapeutic technique called logotherapy.  
+        **Abstract :** He developed a novel therapeutic technique called logotherapy.  
 
-Input :No, it’s just a silly old skit from SNL.
-Goal :Convert to Formal
-Prediction :No it’s just an old skit of SNL.
+-  **Input :** No, it’s just a silly old skit from SNL.
+   **Goal :** Convert to Formal
+   **Prediction :** No it’s just an old skit of SNL.
 
-Input :No wonder the sport felt good at that Wimbledon champion’s dinner.
-Goal :Convert to Formal
-Prediction :It’s not surprising that the sport felt good at the dinner ofWimbledon champions.
+-  **Input :** No wonder the sport felt good at that Wimbledon champion’s dinner.
+   **Goal :** Convert to Formal
+   **Prediction :** It’s not surprising that the sport felt good at the dinner ofWimbledon champions.
 
-Input :why do u have to ask such moronic questions?
-Goal :Convert to Formal
-Prediction :why do we have to ask such questions?
+-  **Input :** why do u have to ask such moronic questions?
+   **Goal :** Convert to Formal
+   **Prediction :** why do we have to ask such questions?
 
-Input :Breaking Bad won all the awards at Emmy.
-Goal :Convert to Wikipedia
-Prediction :Breaking Bad won all the Emmy Awards for its outstanding performance.
+-  **Input :** Breaking Bad won all the awards at Emmy.
+   **Goal :** Convert to Wikipedia
+   **Prediction :** Breaking Bad won all the Emmy Awards for its outstanding performance.
 
-Input :What do you think?
-Goal :Convert to Shakespeare - high
-Prediction :What dost thou say?
+-  **Input :** What do you think?
+   **Goal :** Convert to Shakespeare - high
+   **Prediction :** What dost thou say?
 
 ## Running Marvin:
 Marvin has two server - docker images (App, ) and a MySQL docker image, .
 Instructions to run the servers are in the README.md files of the app and ml folders respectively. 
-
-
-
-
 
