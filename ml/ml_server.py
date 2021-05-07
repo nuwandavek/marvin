@@ -231,10 +231,15 @@ def get_joint_classify_and_salience():
 
     joint_tokens = classifier_tokenizer.convert_ids_to_tokens(classifier_tokenizer.encode(lower))[1:-1]
     for token in joint_tokens:
+        if len(token) > 2:
+          if token[:2] == '##':
+            token = token[2:]
+            print(token)
         occ = lower[sentence_seen:].find(token)
         start = occ + sentence_seen
         end = start + len(token)
-        sentence_seen = sentence_seen + len(token) + occ
+        adj_len = len(token)
+        sentence_seen = sentence_seen + adj_len + occ
         tokens.append({'text' : text[start:end], 'start' : start, 'end' : end})
     
     
