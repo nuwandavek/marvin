@@ -40,6 +40,7 @@ We evaluated the machine learning models that comprise Marvin on several benchma
 - /swap_models [POST] : To swap out the models for different transfer modes
 
 ### API Reference:
+[ml/ml_server.py classification](https://github.com/nuwandavek/marvin/blob/master/ml/ml_server.py#L221)
 ```
 @app.route('/classification', methods = ['GET'])
 def get_joint_classify_and_salience():
@@ -62,7 +63,21 @@ def get_joint_classify_and_salience():
         for each token from the tokenized input.
     '''
 ```
-
+[app/server.py analyze](https://github.com/nuwandavek/marvin/blob/master/app/server.py#L41)
+```
+@app.route('/analyze', methods = ['GET'])
+def get_stats():
+	'''
+	Inputs:
+	Input is assumed to be json of the form 
+  	{text: "some text"}. 
+  	
+  	Returns:
+	Following statistics for the text :
+	- Class, class probs
+	- Salience over tokens for each class
+  	'''
+```
 ## Examples:
 
 Input :He made a new therapeutic technique called logotherapy.
