@@ -6,7 +6,7 @@ var editorText = '';
 
 let examples = {
     "micro-formality": [
-        "I'm gonna go play now, u coming?",
+        "I'm gonna go play now, u wanna come?",
         "No, it’s just a silly old skit from SNL.",
         "why do u have to ask such moronic questions?",
         "i’m gonna go crazy when i get my OPT card",

@@ -19,64 +19,16 @@ from jointclassifier.joint_trainer import JointTrainer
 from jointclassifier.single_trainer import SingleTrainer
 from jointclassifier.joint_model_v1 import JointSeqClassifier
 
+#Utils and constants
+from constants import MODEL_PATHS
+from utils import get_buckets, bucket_match, sort_results, filter_results
+
 import openai
 import argparse
 
 app = Flask(__name__)
 CORS(app)
 
-MODEL_PATHS = {
-    'micro-formality' : {
-        "classifier": "./models/distilbert_uncased_2/formality+emo/joint",
-        "classifier_name": "distilbert-base-uncased",
-        "classifier_nick": "distilbert_uncased_2",
-        "classifier_task" : "formality+emo",
-        "idx_to_classes" : {
-            'formality': {'0': 'informal', '1': 'formal'},
-            'emo': {'0': 'sad', '1': 'happy'}
-        },
-        "label_dims" : {'formality': 1, 'emo': 1},
-        "transfer" : "./models/t5_transfer_formality_3",
-        "transfer_name" : "t5-small",
-        "transfer_nick" : "t5_transfer_formality_3",
-    },
-    'micro-joint' : {
-        "classifier": "./models/distilbert_uncased_2/formality+emo/joint",
-        "classifier_name": "distilbert-base-uncased",
-        "classifier_nick": "distilbert_uncased_2",
-        "classifier_task" : "formality+emo",
-        "idx_to_classes" : {
-            'formality': {'0': 'informal', '1': 'formal'},
-            'emo': {'0': 'sad', '1': 'happy'}
-        },
-        "label_dims" : {'formality': 1, 'emo': 1},
-        "transfer" : "./models/t5_transfer_formality_joint",
-        "transfer_name" : "t5-small",
-        "transfer_nick" : "t5_transfer_formality_joint",
-    },
-    'macro-shakespeare' : {
-        "classifier": "./models/distilbert_uncased_2/shakespeare/joint",
-        "classifier_name": "distilbert-base-uncased",
-        "classifier_nick": "distilbert_uncased_2",
-        "classifier_task" : "shakespeare",
-        "idx_to_classes" : {
-            'shakespeare': {'0': 'noshakespeare', '1': 'shakespeare'}
-        },
-        "label_dims" : {'shakespeare': 1},
-        "transfer" : "./models/t5_transfer_shakespeare",
-        "transfer_name" : "t5-small",
-        "transfer_nick" : "t5_transfer_shakespeare",
-    },
-    'macro-binary' : {
-        "transfer_name" : "t5-small",
-        "transfer_shake" : "./models/t5_transfer_shakespeare_binary",
-        "transfer_nick_shake" : "t5_transfer_shakespeare_binary",
-        "transfer_abs" : "./models/t5_transfer_abstract_binary",
-        "transfer_nick_abs" : "t5_transfer_abstract_binary",
-        "transfer_wiki" : "./models/t5_transfer_wiki_binary",
-        "transfer_nick_wiki" : "t5_transfer_wiki_binary",
-    }
-}
 
 
 def load_models(mode):
@@ -136,49 +88,6 @@ def load_models(mode):
         transfer_model_abs = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_abs'])
         transfer_model_wiki = AutoModelWithLMHead.from_pretrained(mode_paths['transfer_wiki'])
         
-
-def bucket_match(bucket1, bucket2):
-    if bucket2 == 'high':
-        if bucket1 in ['mid','high']:
-            return True
-        else:
-            return False
-    elif bucket2 == 'low':
-        if bucket1 in ['mid','low']:
-            return True
-        else:
-            return False
-    elif bucket2 == 'mid':
-        if bucket1 in ['mid','low']:
-            return True
-        else:
-            return False
-    
-    
-
-def get_buckets(prob, classname):
-    if classname=='formality':
-        if prob<0.2:
-            return 'low'
-        elif prob>0.9:
-            return 'high'
-        else:
-            return 'mid'
-    elif classname=='emo':
-        if prob<0.25:
-            return 'low'
-        elif prob>0.9:
-            return 'high'
-        else:
-            return 'mid'
-    if classname=='shakespeare':
-        if prob<0.1:
-            return 'low'
-        elif prob>0.9:
-            return 'high'
-        else:
-            return 'mid'
-
 
 @app.route("/hello")
 def hello():
@@ -299,13 +208,10 @@ def get_transfer():
             }
             suggestions.append(temp)
 
-        suggestions = [x for x in suggestions if bucket_match(get_buckets(float(x['probs']['formality']),'formality'),output_bucket)]
-        if len(suggestions)>0:
-            suggestions.sort(key=lambda x: float(x['probs']['formality']), reverse=True)
-            res['suggestions'] = suggestions[:int(controls['suggestions'])]
-        else:
-            res['suggestions'] = []
-
+        suggestions = filter_results(suggestions, ['formality'], [output_bucket])
+        suggestions = sort_results(suggestions, ['formality'], [output_bucket])
+        res['suggestions'] = suggestions[:int(controls['suggestions'])]
+        
         if output_bucket=='high' and server_args.openai:
             oai = get_openai_result(text)
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
@@ -327,13 +233,14 @@ def get_transfer():
 
         t = transfer_tokenizer(transfer_input, return_tensors='pt')
         gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
-                                            num_beams=12,
+                                            num_beams=15,
                                             #    early_stopping=True,
                                             encoder_no_repeat_ngram_size=5,
                                             no_repeat_ngram_size=3,
-                                            num_beam_groups=3,
+                                            num_beam_groups=5,
                                             diversity_penalty=0.5,
-                                            num_return_sequences=int(controls['suggestions'])
+                                            # num_return_sequences=int(controls['suggestions'])
+                                            num_return_sequences=10
                                             )
         transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
 
@@ -359,12 +266,9 @@ def get_transfer():
             }
             suggestions.append(temp)
 
-        suggestions = [x for x in suggestions if bucket_match(get_buckets(float(x['probs']['shakespeare']),'shakespeare'),output_bucket)]
-        if len(suggestions)>0:
-            suggestions.sort(key=lambda x: float(x['probs']['shakespeare']), reverse=True)
-            res['suggestions'] = suggestions[:int(controls['suggestions'])]
-        else:
-            res['suggestions'] = []
+        suggestions = filter_results(suggestions, ['shakespeare'], [output_bucket])
+        suggestions = sort_results(suggestions, ['shakespeare'], [output_bucket])
+        res['suggestions'] = suggestions[:int(controls['suggestions'])]
         
     elif mode=="micro-joint":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
@@ -378,13 +282,14 @@ def get_transfer():
         
         t = transfer_tokenizer(transfer_input, return_tensors='pt')
         gen = transfer_model.generate(input_ids= t.input_ids, attention_mask = t.attention_mask, max_length=70, 
-                                            num_beams=12,
+                                            num_beams=15,
                                             #    early_stopping=True,
                                             encoder_no_repeat_ngram_size=5,
                                             no_repeat_ngram_size=3,
-                                            num_beam_groups=3,
+                                            num_beam_groups=5,
                                             diversity_penalty=0.5,
-                                            num_return_sequences=int(controls['suggestions'])
+                                            num_return_sequences=10
+                                            # num_return_sequences=int(controls['suggestions'])
                                             )
         transfers = transfer_tokenizer.batch_decode(gen, skip_special_tokens=True)
 
@@ -400,6 +305,7 @@ def get_transfer():
             "suggestions":[],
             "openai":{}
         }
+        suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -409,7 +315,11 @@ def get_transfer():
                     'emo' : cls_opt['emo']['prob']
                 }
             }
-            res['suggestions'].append(temp)
+            suggestions.append(temp)
+        suggestions = filter_results(suggestions, ['formality','emo'], [output_bucket_f, output_bucket_e])
+        suggestions = sort_results(suggestions,  ['formality','emo'],  [output_bucket_f, output_bucket_e])
+        res['suggestions'] = suggestions[:int(controls['suggestions'])]
+        
         
     elif mode=="macro-binary":
         transfer_input = 'transfer: ' + lower
