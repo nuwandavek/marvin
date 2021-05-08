@@ -93,9 +93,10 @@ function displayModal(data, mode) {
             suggestionText += "</div>";
         }
     }
-    if (data.openai != '') {
+    if (Object.keys(data.openai).length > 0) {
         suggestionText += "<div class='row middle-xs suggestion-item' data-suggestion-id='" + data.suggestions.length + "'>" +
-            "<p class='modal-text'><span class='ui label'>OpenAI GPT3 Suggestion</span><span class='suggestion'>" + data.openai + "</span></p></div>";
+            "<p class='modal-text'><span class='ui label'>OpenAI GPT3 Suggestion</span><span class='suggestion'>" + data.openai.text + "</span></p>" +
+            "<div class='ui teal image label'>" + (data.openai.probs.formality * 100).toFixed(0) + "%<div class='detail'>Formality</div></div></div>";
     }
 
     modalHTML = originalText + suggestionText;
@@ -125,34 +126,6 @@ function displayHeatmap(data) {
     $('#preview').html(output_txt);
 }
 
-// function displayJointHeatmap(data, dropdownSelection) {
-//     let output_txt = ''
-//     let recent_end = 0
-//     let query = null;
-//     if (dropdownSelection === 'formality') {
-//         query = 'formality'
-//     }
-//     else if (dropdownSelection === 'emo') {
-//         query = 'jokes'
-//     }
-
-//     if (query != null) {
-//         for (let i = 0; i < data.tokens.length; i++) {
-//             let currToken = data.tokens[i]
-//             if (recent_end != currToken.start) {
-//                 output_txt += " ";
-//                 recent_end += 1;
-//             }
-//             output_txt += "<span style='background : " + RGBAToHexA(255, 0, 0, data[query]['salience'][i] / 2) + "'>" + currToken.text + "</span>"
-//             recent_end += currToken.text.length
-//         }
-//         $('#preview').html(output_txt);
-//     }
-//     else {
-//         $('#preview').html(data.input);
-//     }
-
-// }
 
 function displayJointHeatmap(data, dropdownSelection, quillEditor) {
     let output_txt = []
@@ -187,5 +160,19 @@ function displayJointHeatmap(data, dropdownSelection, quillEditor) {
 
 }
 
+function displayExamples(quillEditor, examples, mode) {
 
-export { displayHeatmap, displayJointHeatmap, setProgress, setSliders, displayModal };
+    let examplesHTML = "";
+    for (var i = 0; i < examples[mode].length; i++) {
+        examplesHTML += "<div class='example-item' data-example-id='" + i + "'>" +
+            "<p class='example-text'><span class='ui label'>Example " + (i + 1) + "</span><span class='example'>" + examples[mode][i] + "</span></p></div>";
+    }
+    $("#examples").html(examplesHTML);
+    function selectExample() {
+        let k = $(this).data('example-id');
+        quillEditor.setContents([{ insert: examples[mode][k] }]);
+    };
+    $('.example-item').click(selectExample);
+}
+
+export { displayHeatmap, displayJointHeatmap, setProgress, setSliders, displayModal, displayExamples };

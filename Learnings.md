@@ -88,7 +88,7 @@ def get_stats():
         **Wikipedia :** He created a new therapeutic technique called logotherapy.  
         **Abstract :** He developed a novel therapeutic technique called logotherapy.  
 
--  **Input :** I'm gonna go play now, u coming?
+-  **Input :** I'm gonna go play now, u coming?  
    **Goal :** Convert to Formal - high  
    **Prediction :** I am going to play now, are you coming?  
    
@@ -98,7 +98,7 @@ def get_stats():
 
 -  **Input :** No wonder the sport felt good at that Wimbledon champion’s dinner.  
    **Goal :** Convert to Formal  
-   **Prediction :** It’s not surprising that the sport felt good at the dinner ofWimbledon champions.  
+   **Prediction :** It’s not surprising that the sport felt good at the dinner of Wimbledon champions.  
 
 -  **Input :** why do u have to ask such moronic questions?  
    **Goal :** Convert to Formal  

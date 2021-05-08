@@ -18,12 +18,19 @@
     align-items: center;
 }
 
-#editor-container{
+#editor-container, #examples-section{
     border: 1px solid #ccc;
     padding: 0px;
     border-radius: 5px;
 }
 
+.left-section-header{
+    padding: 20px 0px 0px 20px;
+}
+
+#examples-section{
+    margin-top: 10px;
+}
 #editor{
     border: none;
 }
@@ -31,6 +38,10 @@
 .ql-toolbar.ql-snow{
     border: none !important;
     border-bottom: 1px solid #ccc !important;
+}
+
+.example-item{
+    padding: 10px 5px 10px 5px;
 }
 
 .button-actions{
@@ -53,7 +64,7 @@
 
 .ql-editor{
     font-size: 30px !important;
-    min-height: 30vh !important;
+    min-height: 400px !important;
     font-family: 'Lato' !important;
 
 }
@@ -119,7 +130,7 @@
     margin: 30px;
 }
 
-.suggestion{
+.suggestion, .example{
     font-size: 15px;
     margin: 30px;
 }
@@ -129,12 +140,12 @@
     margin-bottom: 10px !important;
 }
 
-.suggestion-item:hover{
+.suggestion-item:hover, .example-item:hover{
     background: #eee;
     cursor: pointer;
 }
 
-.suggestion-item>*{
+.suggestion-item>*,.example-item>*{
     pointer-events: none;
 }
 

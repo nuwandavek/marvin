@@ -6,6 +6,7 @@ import pymysql
 # basic imports
 import json
 import sys
+import argparse
 
 app = Flask(__name__,
             static_url_path='', 
@@ -14,7 +15,9 @@ app = Flask(__name__,
         )
 CORS(app)
 
-con = pymysql.connect(host='0.0.0.0', user='root', password='root', database='marvin')
+def connect_to_db():
+	global con
+	con = pymysql.connect(host='0.0.0.0', user='root', password='root', database='marvin')
 
 @app.route("/hello")
 def hello():
@@ -80,19 +83,21 @@ def transfer_action():
 	mode = request.form.get('mode', type = str).strip()
 	goal = request.form.get('goal', type = str).strip()
 	
-	print('\n\n')
-	print(mode, goal)
-	print(original, original_val)
-	print(accepted, accepted_val)
-	print('\n\n')
-	with con.cursor() as cur:
-		cur.execute(f'INSERT INTO accepted_transfers (mode, goal, original, original_val, accepted, accepted_val) VALUES ("{mode}", "{goal}", "{original}", "{original_val}","{accepted}", "{accepted_val}")')
-	con.commit()
-	with con.cursor() as cur:
-		cur.execute(f'SELECT LAST_INSERT_ID()')
-	row = cur.fetchone()
-	
-	return {'id' : row[0]} , 201
-
+	if server_args.db:
+		with con.cursor() as cur:
+			cur.execute(f'INSERT INTO accepted_transfers (mode, goal, original, original_val, accepted, accepted_val) VALUES ("{mode}", "{goal}", "{original}", "{original_val}","{accepted}", "{accepted_val}")')
+		con.commit()
+		with con.cursor() as cur:
+			cur.execute(f'SELECT LAST_INSERT_ID()')
+		row = cur.fetchone()
+		return {'id' : row[0]} , 201
+	else:
+		return {'id': -1}, 201
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--db', help='Store interactions in a db or not', default=False)
+    global server_args
+    server_args = parser.parse_args()
+    if server_args.db==True:
+        connect_to_db()
     app.run(host="0.0.0.0", port=5000, debug=True)

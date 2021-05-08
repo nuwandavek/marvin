@@ -20,26 +20,10 @@ from jointclassifier.single_trainer import SingleTrainer
 from jointclassifier.joint_model_v1 import JointSeqClassifier
 
 import openai
+import argparse
 
 app = Flask(__name__)
 CORS(app)
-
-with open("./key.txt") as fob:
-   openai.api_key = fob.read().strip()
-
-def get_openai_result(text):
-   prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
-
-   prompt = prompt + text + "\nFormal Language:"
-   res = openai.Completion.create(
-       engine="davinci",
-      prompt= prompt,
-       max_tokens=64,
-       temperature=0.15,
-       stop="\n"
-   )
-
-   return res.choices[0].text.strip()
 
 MODEL_PATHS = {
     'micro-formality' : {
@@ -322,11 +306,18 @@ def get_transfer():
         else:
             res['suggestions'] = []
 
-       if output_bucket=='high':
-           oai = get_openai_result(text)
-           res['openai'] = oai
-       else:
-           res['openai'] = ''
+        if output_bucket=='high' and server_args.openai:
+            oai = get_openai_result(text)
+            cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
+            temp = {
+                'text' : oai,
+                'probs' : {
+                    'formality' : cls_opt['formality']['prob']
+                }
+            }
+            res['openai'] = temp
+        else:
+            res['openai'] = {}
         
     elif mode=="macro-shakespeare":
         classifier_output = classifier_trainer.predict_for_sentence(lower, classifier_tokenizer, salience=False)
@@ -355,7 +346,8 @@ def get_transfer():
             },
             "goal" : f"Shakespeare : {output_bucket}",
             "suggestions":[],
-           "openai":""}
+            "openai":{}
+        }
         suggestions = []
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
@@ -406,8 +398,8 @@ def get_transfer():
             },
             "goal" : f"Formality : {output_bucket_f}; Emotion : {output_bucket_e}",
             "suggestions":[],
-           "openai":""
-       }
+            "openai":{}
+        }
         for transfer in transfers:
             cls_opt = classifier_trainer.predict_for_sentence(transfer, classifier_tokenizer, salience=False)
             temp = {
@@ -463,7 +455,7 @@ def get_transfer():
             },
             "goal" : ["Wikipedia", "Shakespeare", "Scientific Abstract"][int(controls['macro'])],
             "suggestions":[],
-            "openai":""
+            "openai":{}
         }
         for transfer in transfers:
             temp = {
@@ -472,8 +464,32 @@ def get_transfer():
             res['suggestions'].append(temp)
     return res, 200
 
+def load_openai_key():
+    with open("./key.txt") as fob:
+        openai.api_key = fob.read().strip()
 
+def get_openai_result(text):
+   prompt = "Plain Language: what're u doin?\nFormal Language: What are you doing?\nPlain Language: what's up?\nFormal Language: What is up?\nPlain Language: i wanna eat ice cream today!\nFormal Language: I want to eat ice cream today.\nPlain Language: wtf is his problem?\nFormal Language: What is his issue?\nPlain Language: i feel bummed about the store shutting down.\nFormal Language: I feel unhappy about the store closing.\nPlain Language: "
+
+   prompt = prompt + text + "\nFormal Language:"
+   res = openai.Completion.create(
+       engine="davinci",
+      prompt= prompt,
+       max_tokens=64,
+       temperature=0.15,
+       stop="\n"
+   )
+
+   return res.choices[0].text.strip()
 
 if __name__ == '__main__':
     load_models('micro-formality')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--openai', help='Use openai API or not', default=False)
+    global server_args
+    server_args = parser.parse_args()
+
+    if server_args.openai==True:
+        load_openai_key()
+    
     app.run(host="0.0.0.0", port=5001, debug=True)

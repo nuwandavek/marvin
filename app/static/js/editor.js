@@ -1,8 +1,29 @@
-import { displayHeatmap, displayJointHeatmap, setProgress, setSliders, displayModal } from "./display.js";
+import { displayHeatmap, displayJointHeatmap, setProgress, setSliders, displayModal, displayExamples } from "./display.js";
 
 var attentionViz = 'none';
 var styleMode = 'micro-formality';
 var editorText = '';
+
+let examples = {
+    "micro-formality": [
+        "I'm gonna go play now, u coming?",
+        "No, it’s just a silly old skit from SNL.",
+        "why do u have to ask such moronic questions?",
+        "i’m gonna go crazy when i get my OPT card",
+    ],
+    "micro-joint": [
+        "test",
+        "test"
+    ],
+    "macro-shakespeare": [
+        "test",
+        "test"
+    ],
+    "macro-binary": [
+        "test",
+        "test"
+    ]
+}
 
 var quillEditor = new Quill('#editor', {
     modules: {
@@ -25,6 +46,8 @@ quillEditor.on('text-change', function (delta, oldDelta, source) {
 
 
 // Init all sliders
+displayExamples(quillEditor, examples, styleMode);
+
 
 const formalitylabels = ['Informal', 'Neutral', 'Formal']
 const emolabels = ['Sad', 'Neutral', 'Happy']
@@ -108,43 +131,43 @@ $('.dropdown').dropdown({
             value: 'macro-binary',
         }
     ]
-})
-    .dropdown({
-        onChange: function (value, text, $selectedItem) {
-            console.log(value);
-            styleMode = value;
-            $('.preview-container').hide();
-            if (styleMode === "micro-formality") {
-                $('#preview-container-micro-formality').show();
-            }
-            else if (styleMode === "micro-joint") {
-                $('#preview-container-micro-joint').show();
-            }
-            else if (styleMode === "macro-shakespeare") {
-                $('#preview-container-macro-shakespeare').show();
-            }
-            else if (styleMode === "macro-binary") {
-                $('#preview-container-macro-binary').show();
-            }
-            $('#dimmer-model-swap').addClass('active');
-            console.log(styleMode);
-            $.ajax({
-                url: 'http://0.0.0.0:5000/swap_models',
-                method: "POST",
-                crossDomain: true,
-                dataType: 'json',
-                data: { mode: styleMode },
-                success: (d) => {
-                    console.log('models swapped!');
-                    $('#dimmer-model-swap').removeClass('active');
-                },
-                error: (d) => {
-                    console.log('ERROR! :(');
-                    $('#dimmer-model-swap').removeClass('active');
-                }
-            });
+}).dropdown({
+    onChange: function (value, text, $selectedItem) {
+        console.log(value);
+        styleMode = value;
+        $('.preview-container').hide();
+        if (styleMode === "micro-formality") {
+            $('#preview-container-micro-formality').show();
         }
-    });
+        else if (styleMode === "micro-joint") {
+            $('#preview-container-micro-joint').show();
+        }
+        else if (styleMode === "macro-shakespeare") {
+            $('#preview-container-macro-shakespeare').show();
+        }
+        else if (styleMode === "macro-binary") {
+            $('#preview-container-macro-binary').show();
+        }
+        $('#dimmer-model-swap').addClass('active');
+        console.log(styleMode);
+        $.ajax({
+            url: 'http://0.0.0.0:5000/swap_models',
+            method: "POST",
+            crossDomain: true,
+            dataType: 'json',
+            data: { mode: styleMode },
+            success: (d) => {
+                console.log('models swapped!');
+                $('#dimmer-model-swap').removeClass('active');
+            },
+            error: (d) => {
+                console.log('ERROR! :(');
+                $('#dimmer-model-swap').removeClass('active');
+            }
+        });
+        displayExamples(quillEditor, examples, styleMode);
+    }
+});
 
 $('.analyze').click(() => {
     let txt = editorText;

@@ -23,20 +23,30 @@
                 <div class="ui text loader">Loading Models...</div>
             </div>
             <div class="row" id="editor-preview">
-                <div id="editor-container" class="col-xs-8 start-xs  quill-container-body">
-                    <div id="editor" class="quill-body"></div>
-                    <div class="end-xs">
-                        <div class="ui label">
-                            Words
-                            <div class="detail" id="words">0</div>
+                <div id="left-panel" class="col-xs-8 start-xs">
+                    <div id="editor-container" class="start-xs  quill-container-body">
+                        <div id="editor" class="quill-body"></div>
+                        <div class="end-xs">
+                            <div class="ui label">
+                                Words
+                                <div class="detail" id="words">0</div>
+                            </div>
                         </div>
                     </div>
+                    <div id="examples-section">
+                        <p class="side-section-header left-section-header">Examples</p>
+                        <div class="ui divider"></div>
 
+                        <div id="examples">
+                        </div>
+                    </div>
                 </div>
                 <div class="col-xs-4">
                     <div id="mode-selector" class="start-xs mode-container">
                         <div id="mode-selector" class="side-section">
                             <p class="side-section-header">Style Mode</p>
+                            <div class="ui divider"></div>
+
                             <div class="ui fluid search selection dropdown">
                                 <input type="hidden" name="mode">
                                 <div class="default text">Select Text Importance to Visualize</div>
