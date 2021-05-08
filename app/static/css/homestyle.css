@@ -1,0 +1,38 @@
+body{
+    font-family: 'Literata' !important;
+}
+
+#main{
+    min-height: 100vh;
+}
+
+#section-1{
+    height: 100vh;
+}
+
+#section-2{
+    background: #2c3e50;
+    color:#fff;
+    padding: 100px;
+}
+
+.subtitle-main{
+    /* font-size: 1em; */
+    text-transform: uppercase;
+    letter-spacing: 10px;
+}
+
+.text-section{
+    text-align: justify;
+}
+
+.head{
+    text-align: left;
+    font-family: 'Lato';
+    text-transform: uppercase;
+}
+
+#section-3{
+    padding:50px;
+}
+

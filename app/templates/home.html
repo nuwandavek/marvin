@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<head>
+    <title>marvin</title>
+    <link rel="stylesheet" type="text/css" href="/css/homestyle.css">
+    <link rel="stylesheet" type="text/css" href="/css/flexboxgrid.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@900&family=Literata&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.8.7/semantic.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.8.7/semantic.min.js"></script>
+</head>
+
+<body>
+    <div id="main" class="row center-xs">
+        <div id="section-1" class="row center-xs middle-xs col-xs-12">
+            <div id="head" class="col-xs-12">
+                <img class="col-xs-8 col-md-3" src="/res/marvin.jpg">
+                <p class="subtitle-main"><span class="ui text medium">Stylistic Language Editor</span></p>
+                <!-- <p class="text">A MIMS Capstone project by Daniel, Priyam and Vivek</p> -->
+                <!-- <p class="text">Advised by Marti Hearst and Dongyeop Kang</p> -->
+                <button onclick='location.href="/demo"' class="ui secondary button col-xs-6 col-md-2"
+                    style="width: 100%;"><i class="laptop code icon"></i> Demo</button>
+                <button onclick='location.href="https://github.com/nuwandavek/marvin"'
+                    class="ui secondary button col-xs-6 col-md-2" style="width: 100%;"><i class="github brand icon"></i>
+                    Code</button>
+            </div>
+        </div>
+        <div id="section-2" class="row center-xs col-xs-12">
+            <div class="col-xs-10 col-md-6 text-section">
+                <p><span class="ui text large">Marvin is an AI powered tool for stylistic language editing.
+                        It leverages a
+                        combination of recent Natural Language Processing (NLP) and deep learning innovations in text
+                        classification and generation as well as visualization and interpretation techniques. Marvin
+                        provides the ability to classify the style of texts, transfer to other styles as well as
+                        understand
+                        how certain features contribute to style. It strives to adhere to a machine-in-the-loop
+                        framework,
+                        where writing is performed largely by human users, but is aided by algorithmic
+                        suggestions.</span></p>
+
+                <p><span class="ui text large">We evaluated the machine learning models that comprise Marvin on several
+                        benchmark
+                        metrics and
+                        determined that these models are able to perform well on linguistic style tasks. One of Marvin’s
+                        primary novel contributions is the ability to transfer to different specific levels of a
+                        particular
+                        style. It also can perform joint style analysis and transfer for several dimensions of style
+                        simultaneously.</span></p>
+
+                <p><span class="ui text large">At the School of Information we find ourselves at the intersection of
+                        cutting
+                        edge
+                        research and a
+                        will to democratize access to such research. Throughout history, the written word has played a
+                        vital
+                        role in expanding the horizons of human consciousness. And effective use of stylistic language
+                        is
+                        ubiquitous in this pursuit, from scientific text and Wikipedia to the writings of Shakespeare
+                        and
+                        Mahatma Gandhi. Unfortunately, language famously suffers from issues of bias, accessibility and
+                        quality control. Anyone who has ever made a Wikipedia edit or has written a technical blog post
+                        immediately recollects the dozens of examples one has to pore over, to emulate the style,
+                        objectivity and tenor of the writing style. Adherence to a particular style can often be used as
+                        a
+                        proxy measure of value. At best, this leads to a high variance in quality, and at worst, it
+                        makes
+                        the process of writing entirely prohibitive to newcomers. We believe that a system, such as
+                        Marvin,
+                        will help users generate style-conformant content and can democratize access to domains for
+                        fledgling writers from various backgrounds.</span></p>
+                <div class="row center-xs" style="margin:50px">
+                    <img class="col-xs-12" src="/res/marvin_app.jpg">
+                    <p>Marvin in action!</p>
+
+                </div>
+
+                <p><span class="ui text large">This is part of the MIMS Capstone Project by Daniel, Priyam and Vivek,
+                        advised by Marti Hearst
+                        and Dongyeop Kang. We believe that Marvin is the next generation of writing aids. We're building
+                        Marvin for all the hitchhikers, out there in the galaxy. </br></br>Don't panic!</span></p>
+            </div>
+
+        </div>
+        <div id="section-3" class="row col-xs-12 center-xs">
+            <div class="col-xs-10 col-md-6 text-section">
+                <p>
+                    <span class="ui text huge head">Features</span>
+                </p>
+                <p>
+                    <span class="ui text large">
+                        The primary goal of Marvin is to help people write style-conformant content. We do this in two
+                        ways. Firstly, we give users analysis on their sentences so that users themselves can write
+                        better content. Secondly, we provide suggestions for transfer into a target style while
+                        retaining the semantic meaning of the sentence.
+
+
+                    </span>
+                </p>
+                <div class="ui list text huge">
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Classification of text along different style axes</div>
+                            <div class="description">Including macro-styles like Shakespeare, Wikipedia, Scientific
+                                Abstracts and micro-styles like formaltiy, emotions</div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Transfer of text from one style to another</div>
+                            <div class="description">Eg: Modern English → Shakespearean</div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Transfer of text from one point of a style spectrum to another
+                                (Intensity Transfer) </div>
+                            <div class="description">Eg: Mid Formality → High Formality</div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Transfer of text to a combination of multiple styles</div>
+                            <div class="description">Eg: Low Formality and Happy → High Formality and Sad
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Visualization of feature importance for styles
+                            </div>
+                            <div class="description">Understand how each word contributes to scores
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2">Record user actions and generate new datasets forming a closed
+                                machine-in-the-loop system
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p>
+                    <span class="ui text huge head">Research</span>
+                </p>
+                <p>Todo : Main research points, difficulty of the task, datasets created, approach, unique
+                    contributions, examples</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

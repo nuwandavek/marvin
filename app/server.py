@@ -29,6 +29,10 @@ def hello():
 
 @app.route("/")
 def index():
+    return render_template('home.html')
+
+@app.route("/demo")
+def demo():
     return render_template('index.html')
 
 @app.route('/swap_models', methods=['POST'])
