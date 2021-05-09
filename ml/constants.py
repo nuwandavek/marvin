@@ -1,4 +1,8 @@
 MODEL_PATHS = {
+    "common":{
+        "classifier_name" : "distilbert-base-uncased",
+        "transfer_name" : "t5-small" 
+    },
     'micro-formality' : {
         "classifier": "./models/distilbert_uncased_2/formality+emo/joint",
         "classifier_name": "distilbert-base-uncased",

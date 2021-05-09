@@ -148,23 +148,23 @@ $('.dropdown').dropdown({
         else if (styleMode === "macro-binary") {
             $('#preview-container-macro-binary').show();
         }
-        $('#dimmer-model-swap').addClass('active');
-        console.log(styleMode);
-        $.ajax({
-            url: 'http://0.0.0.0:5000/swap_models',
-            method: "POST",
-            crossDomain: true,
-            dataType: 'json',
-            data: { mode: styleMode },
-            success: (d) => {
-                console.log('models swapped!');
-                $('#dimmer-model-swap').removeClass('active');
-            },
-            error: (d) => {
-                console.log('ERROR! :(');
-                $('#dimmer-model-swap').removeClass('active');
-            }
-        });
+        // $('#dimmer-model-swap').addClass('active');
+        // console.log(styleMode);
+        // $.ajax({
+        //     url: 'http://0.0.0.0:5000/swap_models',
+        //     method: "POST",
+        //     crossDomain: true,
+        //     dataType: 'json',
+        //     data: { mode: styleMode },
+        //     success: (d) => {
+        //         console.log('models swapped!');
+        //         $('#dimmer-model-swap').removeClass('active');
+        //     },
+        //     error: (d) => {
+        //         console.log('ERROR! :(');
+        //         $('#dimmer-model-swap').removeClass('active');
+        //     }
+        // });
         displayExamples(quillEditor, examples, styleMode);
     }
 });
