@@ -9,19 +9,25 @@ let examples = {
         "I'm gonna go play now, u wanna come?",
         "No, it’s just a silly old skit from SNL.",
         "why do u have to ask such moronic questions?",
-        "i’m gonna go crazy when i get my OPT card",
+        "i’m gonna go crazy when i get my EAD card",
     ],
     "micro-joint": [
-        "test",
-        "test"
+        "I’m sad you’re going.",
+        "yes sure you're very appealing to me...LOL",
+        "No, it's just a silly old skit from SNL",
+        "If it's not OK with her, it's really no OK, is it?"
     ],
     "macro-shakespeare": [
-        "test",
-        "test"
+        "I'm crying for your over-kindness.",
+        "hey, madam, keep an eye on you.",
+        "I'm sick of your numbers, dear Ophelia.",
+        "you're gonna be sighing!"
     ],
     "macro-binary": [
-        "test",
-        "test"
+        "He made a new therapeutic technique called logotherapy.",
+        "Breaking Bad won all the awards at Emmy.",
+        "Our project is called Marvin, and it has the latest advancements in ML.",
+        "In this competition, we got the highest accuracy."
     ]
 }
 
