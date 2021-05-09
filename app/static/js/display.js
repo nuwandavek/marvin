@@ -148,7 +148,7 @@ function displayJointHeatmap(data, dropdownSelection, quillEditor) {
                 output_txt.push({ insert: ' ' });
                 recent_end += 1;
             }
-            output_txt.push({ insert: currToken.text, attributes: { background: RGBAToHexA(255, 0, 0, data[query]['salience'][i] * 2 - 0.2) } })
+            output_txt.push({ insert: currToken.text, attributes: { background: RGBAToHexA(255, 0, 0, data[query]['salience'][i] * Math.max((data.tokens.length / 3), 2) - 0.2) } })
             recent_end += currToken.text.length
         }
         // console.log(output_txt);

@@ -149,11 +149,166 @@
                         </div>
                     </div>
                 </div>
+                
                 <p>
                     <span class="ui text huge head">Research</span>
                 </p>
-                <p>Todo : Main research points, difficulty of the task, datasets created, approach, unique
-                    contributions, examples</p>
+                
+                <p>
+                <span class="ui text large"> The development of Marvin involved implementing and integrating several recent state-of-the-art machine learning approaches along with our own novel contributions.</span>
+                </p>
+                
+                <p>
+                  <span class="ui text big"> Components:  </span>
+                </p>
+                
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Joint classifier models which classify text inputs on multiple style axes.</div>
+                                <div class="description">
+                                <ul>
+                                  <li>These are custom models adjusted from pretrained DistilBERT(link) models provided by HuggingFace(link).</li>
+                                  <li>The lightweight joint classification models are notably more efficient than large single classifiers.</li>
+                                  <li>They also enabled the creation of pseudo-labels for joint datasets that allow for the possibility of joint transfer.</li>
+                                </ul>
+                                </div>
+                            </div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Paraphraser model which paraphrase texts to a more neutral style.</div>
+                                <div class="description">
+                                <ul> 
+                                  <li>Fine-tuned from a T5-small model (link).</li>
+                                  <li>This is inspired by the approach from STRAP(link).</li>
+                                  <li>These create pseudo-parallel datasets needed for transfer training.</li>
+                                </ul>
+                                </div>
+                            </div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+               
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Transfer models for three different types of transfer (intra-style, joint, and binary):</div>
+                                <div class="description">
+                                <ul> 
+                                  <li>Also fine-tuned from T5 models.</li>
+                                  <li>The joint models which can transfer along multiple style axes simultaneously and the intra-style capabilities enabling transfer to different style intensities are novel contributions to this approach.</li>
+                                </ul>
+                                </div>
+                            </div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+               
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Saliency mapping methods for determining how much input words affect the style score.</div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+               
+                
+                <p>
+                  <span class="ui text big"> Methods:  </span>
+                </p>
+                
+                <p>
+                  The full details of Marvin’s inner workings are described in our report (link), but the main steps of the approach are:
+                </p>
+                <b>Training</b>
+                <ol>
+                  <li> Train classifiers to predict styles of texts from labelled data.</li>
+                  <li> Train paraphraser to paraphrase texts and strip style. </li>
+                  <li> Use paraprahser to generate a pseudo-parallel dataset.</li>
+                  <li> Use classifiers to give style scores to original texts and paraphrases.</li>
+                       <ul> <li>The joint classifiers allow us to get multiple styles axis scores.</li> </ul>
+                  <li>Split the style scores into discrete bins.</li>
+                  <li>Use the pseudo-parallel data along with scores to train transfer models.</li>
+                </ol>
+                
+                <p><b>Evaluation and Use</b></p>
+                
+                For a given input sentence, we can perform analysis and transfer in the following way:
+                <ol>
+                  <li>Use classifiers to get style scores.</li>
+                  <li>Apply saliency to understand how words contribute to style scores.</li> 
+                  <li>Run paraphraser and transfer model to create candidate transfers in desired style.</li>
+                  <li>Use classifiers and other evaluation methods to rank best transfers and determine new style scores.</li>
+                  <li>Provide best transfers and their analyses.</li>
+                  <li>Repeat as desired!</li>
+                </ol>
+                
+
+                
+                <p>
+                  <span class="ui text big"> Datasets Created:  </span>
+                </p>
+                
+                <p>In addition to the models that were built while developing Marvin, we also assembled several datasets.</p> 
+                
+                These include:
+                
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Macro-style datasets (Wikipedia and scientific abstracts).</div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Pseudo-parallel datasets for performing style transfer (For all styles considered).</div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+               
+                <p>
+                  <div class="ui list text huge">
+                   <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header2">Cross-labelled style datasets for joint style analysis (Formality and Emotional Valence).</div>
+                      </div>
+      
+                 </div>
+               </p>
+               
+
             </div>
         </div>
     </div>
