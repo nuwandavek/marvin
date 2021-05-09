@@ -7,26 +7,21 @@ var editorText = '';
 let examples = {
     "micro-formality": [
         "I'm gonna go play now, u wanna come?",
-        "No, it’s just a silly old skit from SNL.",
-        "why do u have to ask such moronic questions?",
         "i’m gonna go crazy when i get my EAD card",
+        "why do you have to ask such questions?"
     ],
     "micro-joint": [
-        "I’m sad you’re going.",
         "yes sure you're very appealing to me...LOL",
-        "No, it's just a silly old skit from SNL",
-        "If it's not OK with her, it's really no OK, is it?"
     ],
     "macro-shakespeare": [
-        "I'm crying for your over-kindness.",
-        "hey, madam, keep an eye on you.",
-        "I'm sick of your numbers, dear Ophelia.",
+        "hey, madam, I'll keep an eye on you.",
+        "No, it's just a dumb old skit from SNL",
+        "I'm sick of your excuses, mister Arthur.",
         "you're gonna be sighing!"
     ],
     "macro-binary": [
-        "He made a new therapeutic technique called logotherapy.",
-        "Breaking Bad won all the awards at Emmy.",
         "Our project is called Marvin, and it has the latest advancements in ML.",
+        "We show that using this new therapeutic technique called logotherapy, we got great results.",
         "In this competition, we got the highest accuracy."
     ]
 }
@@ -180,7 +175,7 @@ $('.analyze').click(() => {
     let modeSelected = styleMode;
     console.log('lol');
     $.ajax({
-        url: 'http://0.0.0.0:5000/analyze',
+        url: '/analyze',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt, mode: modeSelected },
@@ -227,7 +222,7 @@ $('.transfer').click(() => {
 
 
     $.ajax({
-        url: 'http://0.0.0.0:5000/transfer',
+        url: '/transfer',
         crossDomain: true,
         dataType: 'json',
         data: { text: txt, controls: JSON.stringify(controls), mode: modeSelected },
@@ -242,7 +237,7 @@ $('.transfer').click(() => {
                     .modal('hide');
                 console.log('Sending mysql request');
                 $.ajax({
-                    url: 'http://0.0.0.0:5000/transfer_action',
+                    url: '/transfer_action',
                     method: "POST",
                     crossDomain: true,
                     dataType: 'json',

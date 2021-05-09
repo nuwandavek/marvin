@@ -1,5 +1,6 @@
 body{
     font-family: 'Literata' !important;
+    font-size: 1.5em !important;
 }
 
 #main{
@@ -10,9 +11,28 @@ body{
     height: 100vh;
 }
 
-#section-2{
+#section-2, #section-6 {
     background: #2c3e50;
     color:#fff;
+    padding: 100px;
+}
+
+#section-6>ul{
+    list-style: none;
+}
+#section-6>li::before{
+    content: "\u232a";
+    color: #fff;
+}
+
+
+#section-4{
+    background: #c0392b;
+    color:#fff;
+    padding: 100px;
+}
+
+#section-5{
     padding: 100px;
 }
 
@@ -27,12 +47,23 @@ body{
 }
 
 .head{
-    text-align: left;
+    text-align: center;
     font-family: 'Lato';
     text-transform: uppercase;
+    letter-spacing: 15px;
 }
 
 #section-3{
     padding:50px;
 }
 
+.lists{
+    font-size: 1em;
+    line-height: 1.2em;
+}
+.lists>li{
+    margin: 10px;
+}
+.bold{
+    font-weight: 600;
+}
