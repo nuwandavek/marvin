@@ -34,6 +34,11 @@ At the School of Information we find ourselves at the intersection of cutting ed
     - Understand how each word contributes to scores
 - Record user actions and generate new datasets forming a closed machine-in-the-loop system
 
+## Video
+<div align="center">
+  <a href="https://youtu.be/D9z-E00Uwd4"><img src="https://img.youtube.com/vi/D9z-E00Uwd4/maxresdefault.jpg" alt="Marvin Video"></a>
+</div>
+
 ## Project Deliverables
 
 - Datasets Created:
