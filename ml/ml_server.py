@@ -228,7 +228,7 @@ def get_transfer():
     controls = json.loads(controls)
 
     print(controls)
-
+    controls['suggestions'] = int(min(5,max(1,float(controls['suggestions']))))
     if mode=="micro-formality":
         classifier_output = classifier_trainers[mode].predict_for_sentence(lower, classifier_tokenizer, salience=False)
         input_bucket = get_buckets(float(classifier_output['formality']['prob']), 'formality')
@@ -463,4 +463,4 @@ if __name__ == '__main__':
     if server_args.openai==True:
         load_openai_key()
     
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001)
