@@ -139,6 +139,7 @@
                         Marvin, to solve this problem. Marvin’s a text editor that allows users
                         convert text to a new style. It has the latest advances in ML. this
                         website has our efforts, models n evaluations"</span> </p>
+                
 
 
             </div>
@@ -173,7 +174,12 @@
                 <p>
                     <span class="ui text normal bold"> Components: </span>
                 </p>
-
+                
+                <p>
+                    <span class="ui text normal">Marvin is composed of a number of neural network models and related methodologies that play different roles. Below is a summary of the different components that comprise Marvin and how they relate to one another.</span>
+                </p>        
+                
+                
                 <ul class="ui list text normal">
                     <li class="header2 ui text huge">Joint classifier models which classify text inputs on
                         multiple style
@@ -307,6 +313,55 @@
 
             </div>
         </div>
+        
+        <div id="section-7" class="row col-xs-12 center-xs">
+            <div class="col-xs-10 col-md-6 text-section">
+
+                <p class="center-xs">
+                    <span class="ui text huge head">Limitations and Challenges</span>
+                </p>
+                
+                <p>
+                    <span class="ui text normal">While we believe that Marvin has made exciting progress on the challengeing task of neural style transfer, there are certainly some shortcomings. This work is still at a relatively early stage and hopefully future work could address some of these limitations. Below are some of the ways in which Marvin's performance is limited.</span>
+                </p>        
+                
+ <div class="ui list">
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2"> <u>Joint style transfer currently does not work well in many cases.</u>This is partly due to the axes that we used for our main test case, formality and emotional valence. Emotional valence is particularly subtle and difficult for our current models to handle. Also our training procedure for joint models could be refined in a number of ways that may yield improvements. These steps could lead to better performance in the future but for now, this aspect of our approach is limited.</div>
+                        </div>
+
+                    </div>
+
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2"><u>Transfering intra-style generally works well when starting from the low-end of the spectrum, but it does not work as well when starting from the high-end of the spectrum</u>. This is likely due to how we assembled the pseudo-parallel training data where mdoels generally were transfering from low to high along some of the style axes. This problem could be addressed with refinements to the training procedure.</div>
+                        </div>
+                    </div>
+
+
+
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2"><u>Generally model performance is worse for text that is dissimilar to the distribution of texts seen during training.</u> This is true of many neural approaches, but it is worth noting that this distributional shift affects Marvin as well.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="item">
+                        <i class="right triangle icon"></i>
+                        <div class="content">
+                            <div class="header2"><u>There is <a
+                            href="https://dl.acm.org/doi/10.1145/3442188.3445922"> evidence</a> that large generative language models can produce text that encodes social biases and we have not yet taken steps to mitigate the chances that Marvin does this.</u> We screened some of our training data to avoid some of these issues, but a more thorough approach to addressing possible biases is something we would want to perform if Marvin is to scale up.</div>
+                        </div>
+                    </div>
+                    
+                </div>
+                </div>
+                
+        
         <div id="section-6" class="row col-xs-12 center-xs">
             <div class="col-xs-10 col-md-6 text-section">
 
